@@ -8,6 +8,13 @@ Library to use Arduino as a home automation device
 The SpikeHome library is a major part of my home automation project. My full installation currently consists of node.js, IPSymcon, an Apache web server, a MySQL Database, Z-Wave Products, FS20 Products and more and more Arduinos. I am targeting to FS20 Remote controls, Arduinos, node.js and Apache Web-Server and a non-sql database. I will reduce Z-Wave Products, IPSymcon and the MySQL Database
 I will add more and more Arduino based solutions to the home automation and therefor I have built this library. 
 
+<h2>Content</h2>
+<ul>
+<li>The library consists of the basic framework found in "SpikeHome" (no additional libraries needed) </li>
+<li>Additional sensors found in "SpikeSensors" (needs additional libraries to support the sensors) </li>
+<li>Tutorials found in "Tutorial" that you should use to learn how the library works</li>
+</ul>
+
 <h2>Why Arduino?</h2>
 I do not like to use available sensors anymore because: 
 <ul>
