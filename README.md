@@ -10,11 +10,15 @@ I will add more and more Arduino based solutions to the home automation and ther
 
 <h2>Why Arduino?</h2>
 I do not like to use available sensors anymore because: 
-•	Nothing I bought yet was reliable enough (365 days in a year working without any handling – reset, 100% receiving commands, 100% error correction when sending data). My Arduinos are reliable enough. They just work …
-•	Once installed you do not need to regularly update it with new software version, reboot them, …
-•	The sensors are not both intelligent and remote controllable (example: you get an electric roller belt with high automation but it is not controllable by a PC)
-•	 You get everything you want for Arduinos, all kind of sensors, all kind of actors
-•	Arduinos are good protected against hacking. If you attach them with a RS485 bus you are not able to change the code remotely. 
+<ul>
+<li>
+Nothing I bought yet was reliable enough (365 days in a year working without any handling – reset, 100% receiving commands, 100% error correction when sending data). My Arduinos are reliable enough. They just work …
+</li>
+<li>Once installed you do not need to regularly update it with new software version, reboot them, … </li>
+<li>The sensors are not both intelligent and remote controllable (example: you get an electric roller belt with high automation but it is not controllable by a PC)</li>
+<li>You get everything you want for Arduinos, all kind of sensors, all kind of actors</li>
+<li>Arduinos are good protected against hacking. If you attach them with a RS485 bus you are not able to change the code remotely.</li>
+</ul>
 
 <h2>To use the library, you need to know …</h2>
 To use the library, you must be able to create Arduino sketches and include libraries in your development environment. If you use the included classes to control your sensors and actors, you only need little development experiences. If you like to develop own classes for additional sensors/actors, you need to understand the framework well and you need at least some development experiences. 
@@ -29,16 +33,18 @@ This is done by an event driven design. Each sensor or actor (“object”) will
 Please use the tutorials to understand the framework starting with Tutorial1. 
 
 <h2>The library currently supports:</h2>
-•	Controlling binary switches (Anything that just switches on/off)
-•	Controlling Roller Shutters
-•	Water leak detection
-•	Open/Closed Window detection
-•	Movement detection
-•	Controlling lights
-•	Temperature
-•	Humidity
-•	Brightness
-•	Communication with a server
+<ul>
+<li>Controlling binary switches (Anything that just switches on/off)</li>
+<li>Controlling Roller Shutters</li>
+<li>Water leak detection</li>
+<li>Open/Closed Window detection</li>
+<li>Movement detection</li>
+<li>Controlling lights</li>
+<li>Temperature</li>
+<li>Humidity</li>
+<li>Brightness</li>
+<li>Communication with a server</li>
+</ul>
 
 <h2>Communication with PC</h2>
 The library includes communication classes that can be used to communicate with the PC. You are able to add your own class and attach them to the framework. 
@@ -49,6 +55,8 @@ The software design is limited by the available memory of the Arduino. I would l
 Currently I do not provide the PC side of the RS485 communication. I have the source code based on node.js but it is not yet usable for others. Especially because it is closely linked to specific database tables that are historically grown.
 
 <h2>Next topics</h2>
-•	Adding more intelligence to the devices, sunrise/sunset detection to steer the Roller Shutters, a Clock based on the build-in features with time synchronization by the PC. Currently this is done by the PC only. 
-•	Add a simple server based on an Arduino instead of a PC
-•	Providing node.js code to handle the RS485 based communication.
+<ul>
+<li>Adding more intelligence to the devices, sunrise/sunset detection to steer the Roller Shutters, a Clock based on the build-in features with time synchronization by the PC. Currently this is done by the PC only. </li>
+<li>Add a simple server based on an Arduino instead of a PC</li>
+<li>Providing node.js code to handle the RS485 based communication.</li>
+</ul>
