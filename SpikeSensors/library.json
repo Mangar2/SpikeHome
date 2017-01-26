@@ -1,0 +1,43 @@
+{
+    "name": "SpikeSensors",
+    "keywords": "arduino home automation sensor light temperature humidity",
+    "description": "Arduino library to automate your home, additional sensors",
+    "authors":
+            [
+                {
+                    "name": "Volker Böhm",
+                    "email": "mangar@yahoo.com",
+                    "maintainer": true
+                }
+            ],
+    "dependencies":
+            [
+                {
+                    "name": "Wire",
+                    "authors": "Arduino",
+                    "frameworks": "arduino"
+                },
+                {
+                    "name": "OneWire",
+                    "authors": "Paul Stoffregen",
+                    "frameworks": "arduino"
+                },
+                {
+                    "name": "SoftwareSerial",
+                    "frameworks": "arduino"
+                },
+                {
+                    "name": "DallasTemperature",
+                    "authors": "Miles Burton, Tim Newsome, Guil Barros, Rob Tillaart",
+                    "frameworks": "arduino"
+                },
+                {
+                    "name": "LiquidCrystal_I2C",
+                    "authors": "Miles Burton",
+                    "frameworks": "arduino"
+                }
+            ],
+    "version": "1.0",
+    "frameworks": "arduino",
+    "platforms": "*"
+}
