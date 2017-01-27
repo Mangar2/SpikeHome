@@ -8,9 +8,9 @@
  *          100% = fully closed. The amount of time the roller needs to move from fully open to
  *          fully closed must be configured exactly to achieve this.
  *
- * Author:  Volker Böhm
+ * Author:    Volker Böhm
  * Copyright: Volker Böhm
- * Version: 1.0
+ * Version:   1.0
  * ---------------------------------------------------------------------------------------------------
  */
 

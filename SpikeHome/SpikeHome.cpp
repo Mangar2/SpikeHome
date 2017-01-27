@@ -5,8 +5,8 @@
  *
  * File:      Initialization.cpp
  *
- * Author:    Mangar
- * Copyright: Mangar
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version:   1.0
  * Created on 28. Dezember 2016, 07:53
  * ---------------------------------------------------------------------------------------------------

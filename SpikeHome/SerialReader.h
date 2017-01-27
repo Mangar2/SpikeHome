@@ -7,8 +7,8 @@
  * Purpose:   Reads char by char from a serial device until no char is available. Timeout is calcuated
  *            from current serial speed
  *
- * Author:    Mangar
- * Copyright: Mangar
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version:   1.0
  * Created on 22. Januar 2017, 08:49
  * ---------------------------------------------------------------------------------------------------

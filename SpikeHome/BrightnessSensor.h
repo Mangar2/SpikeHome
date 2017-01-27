@@ -3,9 +3,10 @@
  * This software is licensed under the GNU public license. It is furnished "as is", without any
  * support, and with no warranty, express or implied, as to its usefulness for any purpose.
  *
- * File:    BrightnessSensor.h
- * Purpose: Regularily check the state of a brightness sensor sensor and notify its change
- * Author:  Volker Böhm
+ * File:      BrightnessSensor.h
+ * Purpose:   Regularily check the state of a brightness sensor sensor and notify its change
+  * Author:   Volker Böhm
+ * Copyright: Volker Böhm
  * Version: 1.0
  * ---------------------------------------------------------------------------------------------------
  */

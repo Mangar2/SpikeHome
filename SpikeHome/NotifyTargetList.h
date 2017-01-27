@@ -7,8 +7,8 @@
  * Purpose:   Helper file for Schedule. Holds a list of NotifyTargets. Each Targets has a timer-count
  * attachted to it to signal/show when to call its checkState Method
  *
- * Author:    Mangar
- * Copyright: Mangar
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version:   1.0
  * Created on 7. Januar 2017, 12:00
  * ---------------------------------------------------------------------------------------------------

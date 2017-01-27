@@ -5,18 +5,17 @@
  *
  * File:      Notification.cpp
  *
- * Author:    Mangar
- * Copyright: Mangar
- * Version:   1.0
+ * Author:      Volker Böhm
+ * Copyright:   Volker Böhm
+ * Version:     1.0
  * Created on 24. Dezember 2016, 07:04
  * ---------------------------------------------------------------------------------------------------
  */
-
 #include "Notification.h"
 #include "SerialReader.h"
 
 Notification::Notification()
-:Notification(0, 0)
+:Notification(0, StateValue(0))
 {
 }
 
@@ -136,11 +135,13 @@ bool Notification::setValueFromSerialReader(SerialReader& reader)
         type = toupper(reader.getChar());
     }
     if (type != 0 && reader.checkNext('"') && reader.checkNext(':')) {
+        printVariableIfDebug(type);
         if (type == 'K' && reader.checkNext('"')) {
             if (reader.readNext()) {
                 key = reader.getChar();
                 if (reader.checkNext('"')) {
                     mKey = key;
+                    printVariableIfDebug(mKey);
                     res = true;
                 }
             }
@@ -149,14 +150,19 @@ bool Notification::setValueFromSerialReader(SerialReader& reader)
                 res = true;
                 switch (type) {
                     case 'K': mKey = (key_t) reader.getValue();
+                        printVariableIfDebug(mKey);
                         break;
                     case 'S': mSenderAddress = (address_t) reader.getValue();
+                        printVariableIfDebug(mSenderAddress);
                         break;
                     case 'R': mReceiverAddress = (address_t) reader.getValue();
+                        printVariableIfDebug(mReceiverAddress);
                         break;
                     case 'A': mAcknowledge = reader.getValue();
+                        printVariableIfDebug(mAcknowledge);
                         break;
                     case 'V': mValue = (value_t) reader.getValue();
+                        printVariableIfDebug(mValue.toInt());
                         break;
                     default: res = false;
                         break;
@@ -176,12 +182,17 @@ bool Notification::getJsonFromSerial(HardwareSerial* serial, time_t serialSpeed)
     };
     if (reader.getChar() == '{') {
         while (setValueFromSerialReader(reader)) {
-            if (!reader.checkNext(',')) {
+            if (reader.getChar() != ',' && !reader.checkNext(',')) {
                 break;
             }
         };
         res = (reader.getChar() == '}') && mKey != 0;
     }
+#ifdef DEBUG
+    if (res) {
+        printJsonToSerial(serial);
+    }
+#endif
     return res;
 }
 

@@ -5,8 +5,8 @@
  *
  * File:      RS485.cpp
  *
- * Author:    Mangar
- * Copyright: Mangar
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version:   1.0
  * ---------------------------------------------------------------------------------------------------
  */

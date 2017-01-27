@@ -5,7 +5,8 @@
  *
  * File:    Config.h
  * Purpose: Stores configuration settings for a device and defines configuration key values
- * Author:  Volker Böhm
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version: 1.0
  * ---------------------------------------------------------------------------------------------------
  */
@@ -58,6 +59,14 @@ public:
     // Prints settings to serial
     void print() const;
 
+    /**
+     * Gets the internal EEPROM Manager
+     * @return
+     */
+    EEPROMManager& getEEPROM()
+    {
+        return mEEPROM;
+    }
 
 private:
     /**

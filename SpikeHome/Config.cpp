@@ -5,7 +5,8 @@
  *
  * File:    Config.cpp
  *
- * Author:  Volker Böhm
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version: 1.0
  * ---------------------------------------------------------------------------------------------------
  */

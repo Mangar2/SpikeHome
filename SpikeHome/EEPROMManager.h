@@ -81,6 +81,11 @@ public:
     void clear();
 
     /**
+     * Delete unused elements
+     */
+    void shrink();
+
+    /**
      * Prints the content of the EEPROM to serial, only if debug flag is set in Trace.h
      */
     void print() const;

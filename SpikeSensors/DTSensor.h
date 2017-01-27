@@ -6,7 +6,7 @@
  * File:    DTSensor.h
  * Purpose: Controls a DS18B20 Temperature Sensor connected by onewire
  *
- * Author:  Volker Böhm
+ * Author:    Volker Böhm
  * Copyright: Volker Böhm
  * Version: 1.0
  * ---------------------------------------------------------------------------------------------------

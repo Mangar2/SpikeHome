@@ -17,7 +17,7 @@
  *          changeSwitches(SET_MODE + 0x01) will set pin 11 to HIGH and keep pin 12 unchanged
  *          changeSwitches(CLEAR_MODE + 0x01) will set pin 11 to LOW and keep pin 12 unchanged
  *
- * Author:  Volker Böhm
+ * Author:    Volker Böhm
  * Copyright: Volker Böhm
  * Version: 1.0
  * ---------------------------------------------------------------------------------------------------

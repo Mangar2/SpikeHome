@@ -10,8 +10,8 @@
  *            write method to send data and the pollNonBlocking method to poll for data and
  *            handle it.
  *
- * Author:    Mangar
- * Copyright: Mangar
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version:   1.0
  * Created on 23. Dezember 2016, 21:53
  * ---------------------------------------------------------------------------------------------------

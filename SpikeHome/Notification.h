@@ -8,8 +8,8 @@
  *
  *
  *
- * Author:    Mangar
- * Copyright: Mangar
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version:   1.0
  * Created on 24. Dezember 2016, 06:58
  * ---------------------------------------------------------------------------------------------------

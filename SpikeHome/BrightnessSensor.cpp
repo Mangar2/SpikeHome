@@ -5,8 +5,8 @@
  *
  * File:      BrightnessSensor.cpp
  *
- * Author:    Mangar
- * Copyright: Mangar
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version:   1.0
  * Created on 30. Dezember 2016, 19:03
  * ---------------------------------------------------------------------------------------------------

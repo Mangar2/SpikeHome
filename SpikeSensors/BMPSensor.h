@@ -5,7 +5,8 @@
  *
  * File:    BMPSensor.h
  * Purpose: Regularily check the state of a pressure sensor sensor and notify its change
- * Author:  Volker Böhm
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version: 1.0
  * ---------------------------------------------------------------------------------------------------
  */

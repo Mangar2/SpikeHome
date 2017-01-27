@@ -7,8 +7,8 @@
  * Purpose:
  *
  *
- * Author:    Mangar
- * Copyright: Mangar
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version:   1.0
  * Created on 20. Januar 2017, 21:34
  * ---------------------------------------------------------------------------------------------------

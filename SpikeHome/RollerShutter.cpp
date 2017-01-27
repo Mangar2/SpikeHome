@@ -3,9 +3,9 @@
  * This software is licensed under the GNU public license. It is furnished "as is", without any
  * support, and with no warranty, express or implied, as to its usefulness for any purpose.
  *
- * File:    RollerShutter.cpp
+ * File:      RollerShutter.cpp
  *
- * Author:  Volker Böhm
+ * Author:    Volker Böhm
  * Copyright: Volker Böhm
  * ---------------------------------------------------------------------------------------------------
  */

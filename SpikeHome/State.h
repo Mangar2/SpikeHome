@@ -6,7 +6,7 @@
  * File:    State.h
  * Purpose: Adds functionality for notification targets with values thate are regularily read and
  *          send to the server
- * Author:  Volker Böhm
+ * Author:    Volker Böhm
  * Copyright: Volker Böhm
  * Version: 1.0
  * ---------------------------------------------------------------------------------------------------

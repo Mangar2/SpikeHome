@@ -5,8 +5,8 @@
  *
  * File:      Clock.cpp
  *
- * Author:    Mangar
- * Copyright: Mangar
+ * Author:   Volker Böhm
+ * Copyright: Volker Böhm
  * Version:   1.0
  * Created on 22. Januar 2017, 07:45
  * ---------------------------------------------------------------------------------------------------

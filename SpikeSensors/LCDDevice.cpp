@@ -5,8 +5,8 @@
  *
  * File:      LCDDevice.cpp
  *
- * Author:    Mangar
- * Copyright: Mangar
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version:   1.0
  * Created on 31. Dezember 2016, 15:24
  * ---------------------------------------------------------------------------------------------------

@@ -3,8 +3,8 @@
  * This software is licensed under the GNU public license. It is furnished "as is", without any
  * support, and with no warranty, express or implied, as to its usefulness for any purpose.
  *
- * File:    Swithces.cpp
- * Author:  Volker Böhm
+ * File:      Swithces.cpp
+ * Author:    Volker Böhm
  * Copyright: Volker Böhm
  * ---------------------------------------------------------------------------------------------------
  */
@@ -35,7 +35,7 @@ void Switches::init(switch_t pins)
         pins >>= 1;
     }
     for (pin = A0; pin <= A3; pin++) {
-        if (pin & 1) {
+        if (pins & 1) {
             pinMode(pin, OUTPUT);
         }
         pins >>= 1;
@@ -59,7 +59,7 @@ void Switches::setAll(switch_t values)
             pins >>= 1;
         }
         for (pin = A0; pin <= A3; pin++) {
-            if (pin & 1) {
+            if (pins & 1) {
                 pinMode(pin, OUTPUT);
             }
             pins >>= 1;

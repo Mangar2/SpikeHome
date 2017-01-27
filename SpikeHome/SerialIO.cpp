@@ -5,8 +5,8 @@
  *
  * File:      SerialIO.cpp
  *
- * Author:    Mangar
- * Copyright: Mangar
+ * Author:    Volker Böhm
+ * Copyright: Volker Böhm
  * Version:   1.0
  * Created on 25. Dezember 2016, 08:15
  * ---------------------------------------------------------------------------------------------------

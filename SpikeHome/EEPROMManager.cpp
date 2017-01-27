@@ -11,6 +11,7 @@
  * ---------------------------------------------------------------------------------------------------
  */
 
+#define DEBUG
 #include <avr/eeprom.h>
 #include "EEPROMManager.h"
 
@@ -60,15 +61,13 @@ void EEPROMManager::insertEntryByPos(pos_t pos, key_t key, value_t value, bool m
     pos_t maxPos     = calcPosByIndex(mMaxEntries - 1);
     // loop handling the insert
     while (!entrySet && pos <= maxPos) {
-        if (getKeyByPos(pos) != INVALID_CELL) {
 
-            if (moveCurrent) {
-                append(getKeyByPos(pos), getValueByPos(pos + ID_SIZE));
-            }
-            entrySet = setEntryByPos(pos, key, value);
-
-            mAddedEntries++;
+        if (moveCurrent) {
+            append(getKeyByPos(pos), getValueByPos(pos + ID_SIZE));
         }
+        entrySet = setEntryByPos(pos, key, value);
+
+        mAddedEntries++;
 
         pos += ENTRY_SIZE;
         moveCurrent = true;
@@ -238,7 +237,7 @@ key_t EEPROMManager::getKeyByPos(pos_t pos) const
 bool EEPROMManager::setKeyByPos(pos_t pos, key_t key)
 {
     bool res = true;
-    for (uint8_t i = ID_SIZE - 1; i >= 0; i--) {
+    for (int8_t i = ID_SIZE - 1; i >= 0; i--) {
         res = res && writeData(pos + i, (eeprom_t) key);
         key /= 256;
     }
@@ -257,6 +256,10 @@ void EEPROMManager::clear()
     resetInsertPos();
 }
 
+void EEPROMManager::shrink()
+{
+    setEntryAmount(mAddedEntries);
+}
 
 void EEPROMManager::print() const
 {
@@ -266,8 +269,13 @@ void EEPROMManager::print() const
       printVariableIfDebug(mMaxEntries);
       printlnIfDebug("");
       for (pos_t i = 0; i < entryAmount; i++) {
-          printIfDebug((char)getKeyByIndex(i));
-          printIfDebug("->");
-          printlnIfDebug(getValueByIndex(i));
+            key_t key = getKeyByIndex(i);
+            if (key >= '0' && key <= 'z') {
+                printIfDebug((char)key);
+            } else {
+                printIfDebug(key);
+            }
+            printIfDebug("->");
+            printlnIfDebug(getValueByIndex(i));
       }
 }
