@@ -1,7 +1,8 @@
 /**
  * ---------------------------------------------------------------------------------------------------
- * This software is licensed under the GNU public license. It is furnished "as is", without any
- * support, and with no warranty, express or implied, as to its usefulness for any purpose.
+ * This software is licensed under the GNU LESSER GENERAL PUBLIC LICENSE Version 3. It is furnished
+ * "as is", without any support, and with no warranty, express or implied, as to its usefulness for
+ * any purpose.
  *
  * File:    State.h
  * Purpose: Adds functionality for notification targets with values thate are regularily read and

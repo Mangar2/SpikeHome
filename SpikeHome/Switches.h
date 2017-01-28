@@ -1,6 +1,7 @@
 /* ---------------------------------------------------------------------------------------------------
- * This software is licensed under the GNU public license. It is furnished "as is", without any
- * support, and with no warranty, express or implied, as to its usefulness for any purpose.
+ * This software is licensed under the GNU LESSER GENERAL PUBLIC LICENSE Version 3. It is furnished
+ * "as is", without any support, and with no warranty, express or implied, as to its usefulness for
+ * any purpose.
  *
  * File:    Switches.h
  * Purpose: Controls a set of pins and switches them on or off. Usually to control relais or other
