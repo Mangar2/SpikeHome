@@ -28,6 +28,16 @@ public:
      */
     BrightnessSensor(device_t deviceNo, pin_t analogPin);
 
+    /**
+     * Sets the brightness value if the lights are fully switched on.
+     * @param fullOnBrightness new brightness value
+     */
+    void setFullOnBrightness(value_t fullOnBrightness) {
+        printVariableIfDebug(fullOnBrightness);
+        mFullOnBrightness = fullOnBrightness;
+        setConfigValue(FULL_ON_VALUE_KEY, mFullOnBrightness);
+    }
+
 protected:
 
     /**
@@ -56,7 +66,7 @@ protected:
      * @param key key/identifier of the change
      * @param data new value
      */
-    virtual void handleChange(key_t key, StateValue data);
+    virtual void handleChange(address_t senderAddress, key_t key, StateValue data);
 
     /**
      * Calculates the neccessary brightness value to reach a brightness level in percent of the

@@ -71,15 +71,16 @@ public:
     /**
      * Notifies all objects/sensors of a device of a configuration change
      * @param deviceNo number of device
+     * @param senderAddress address of the sender
      * @param key key/identifier of the change
      * @param value new value
      */
-    void notifyConfigChange(device_t deviceNo, key_t key, value_t value)
+    void notifyChange(device_t deviceNo, address_t senderAddress, key_t key, value_t value)
     {
         NotifyTarget* cur;
         for (cur = first; cur!= 0; cur = cur->getNext()) {
             if (cur->getDeviceNo() == deviceNo) {
-                cur->handleChange(key, value);
+                cur->handleChange(senderAddress, key, value);
             }
         }
     }

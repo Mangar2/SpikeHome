@@ -5,19 +5,20 @@
  * any purpose.
  *
  * File:    Activity.cpp
- * Author:  Volker BÃ¶hm
- * Copyright: Volker BÃ¶hm
+ * Author:  Volker Böhm
+ * Copyright: Volker Böhm
  * ---------------------------------------------------------------------------------------------------
  */
 
+//#define DEBUG
 #include "Activity.h"
 
 Activity::Activity(device_t deviceNo)
 : State(deviceNo, LIGHT_ON_NOTIFICATION)
 {
     mActivityTimeInMilliseconds = 0;
-    mMoveActiveCount = 0;
-    mActivityCount = 0;
+    mLightSwichtdOnByCommand = false;
+    NotifyTarget::setCheckMask(NotifyTarget::CHECKSTATE_NORMAL);
     initConfig();
 }
 
@@ -30,20 +31,26 @@ void Activity::initConfig()
 
 void Activity::checkState(time_t scheduleLoops)
 {
-    if (mMoveActiveCount == 0) {
+    if (!mState.isMoveActive()) {
         if (mActivityTimeInMilliseconds > ACTIVITY_INTERVAL) {
             mActivityTimeInMilliseconds -= ACTIVITY_INTERVAL;
         } else {
             mActivityTimeInMilliseconds = 0;
+            mLightSwichtdOnByCommand = false;
+            mState.lightTimeOut();
         }
     }
+    mState.decreaseIgnoreMoveTimer();
     State::checkState(scheduleLoops);
 }
 
 void Activity::setTime(time_t activityTimeInSeconds)
 {
     printVariableIfDebug(activityTimeInSeconds);
-    mActivityTimeInMilliseconds = activityTimeInSeconds * MILLISECONDS_IN_A_SECOND;
+    time_t newTimeInMilliseconds = activityTimeInSeconds * MILLISECONDS_IN_A_SECOND;
+    if (!mLightSwichtdOnByCommand || mActivityTimeInMilliseconds < newTimeInMilliseconds) {
+        mActivityTimeInMilliseconds = newTimeInMilliseconds;
+    }
     printIfDebug(F("Activity(ms):"));
     printlnIfDebug(mActivityTimeInMilliseconds);
 }
@@ -53,29 +60,11 @@ StateValue Activity::getValue()
     return value_t(mActivityTimeInMilliseconds / 1000);
 }
 
-time_t Activity::calcTimeInSeconds()
+time_t Activity::calcTimeInSeconds(uint8_t activityCount)
 {
+    printVariableIfDebug(activityCount);
     return min(mMaxTimeInSeconds,
-            mTimeFirstSignalInSeconds + time_t(mActivityCount) * mIncreaseTimeNextSignalInSeconds);
-}
-
-void Activity::increaseActivityTime()
-{
-
-    if (mActivityTimeInMilliseconds == 0) {
-        mActivityCount = 0;
-    } else {
-        mActivityCount = min(100, mActivityCount + 1);
-    }
-    setTime(calcTimeInSeconds());
-}
-
-void Activity::setActivityTimeOnEntryMovement()
-{
-    bool recentMove = int32_t(mActivityTimeInMilliseconds) >= (int32_t(calcTimeInSeconds()) - 20) * int32_t(MILLISECONDS_IN_A_SECOND);
-    if (mActivityTimeInMilliseconds < mTimeFirstSignalInSeconds || recentMove) {
-        setTime(mTimeFirstSignalInSeconds);
-    }
+            mTimeFirstSignalInSeconds + time_t(activityCount) * mIncreaseTimeNextSignalInSeconds);
 }
 
 void Activity::handleFS20Command(value_t value)
@@ -88,33 +77,26 @@ void Activity::handleFS20Command(value_t value)
     }
 }
 
-void Activity::handleChange(key_t key, StateValue data)
+void Activity::handleChange(address_t senderAddress, key_t key, StateValue data)
 {
     value_t newValue = data.toInt();
     switch (key) {
         case MOVEMENT_NOTIFICATION:
-            if (newValue == 0) {
-                if (mMoveActiveCount > 0) {
-                    mMoveActiveCount--;
-                }
-            } else {
-                mMoveActiveCount++;
-                increaseActivityTime();
-            }
-            break;
-        case ENTRY_MOVEMENT_NOTIFICATION:
+            printStringIfDebug("MOVEMENT_NOTIFICATION device: ");
+            printlnIfDebug(this->getDeviceNo());
+            mState.moveDetected(newValue);
             if (newValue != 0) {
-                setActivityTimeOnEntryMovement();
+                setTime(calcTimeInSeconds(mState.getActivityWeight()));
             }
             break;
         case INIT_LIGHT_TIME_KEY:
-            if (newValue >= 5 && newValue <= 10000) {
+            if (newValue >= 0 && newValue <= 10000) {
                 mTimeFirstSignalInSeconds = newValue;
                 setConfigValue(key, newValue);
             }
             break;
         case INC_LIGHT_TIME_KEY:
-            if (newValue >= 5 && newValue <= 10000) {
+            if (newValue >= 1 && newValue <= 10000) {
                 mIncreaseTimeNextSignalInSeconds = newValue;
                 setConfigValue(key, newValue);
             }

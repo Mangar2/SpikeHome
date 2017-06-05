@@ -12,6 +12,7 @@
  * ---------------------------------------------------------------------------------------------------
  */
 
+//#define DEBUG
 #include "RS485.h"
 
 RS485::RS485(device_t deviceAmount, pin_t readWritePin)
@@ -38,6 +39,9 @@ void RS485::sendNotification(const Notification& notification)
     // Savety buffer
     delay(2);
     digitalWrite(mReadWritePin, RS485_RECEIVE);
+    if (notification.getSenderAddress() == 1 && notification.getKey() != RS485State::TOKEN) {
+        notification.printToSerial(&Serial);
+    }
 }
 
 void RS485::pollNonBlocking()
@@ -55,6 +59,15 @@ void RS485::pollNonBlocking()
             }
         }
     } while ((timeLastCharRead + timeoutInMilliseconds > millis()) && (i < Notification::BUFFER_SIZE));
+#ifdef DEBUG
+    if (i > 0) {
+        for (int j = 0; j < i; j++) {
+            Trace::printHex(mReceiveBuf[j]);
+        }
+
+        printlnIfDebug("");
+    }
+#endif
 
     handleNotification(Notification(mReceiveBuf, i));
 
@@ -109,6 +122,8 @@ void RS485::handleNotification(const Notification& notification)
     switch(notification.getError()) {
         case Notification::INVALID_LENGTH_ERROR:
             mReceiveError = 0x0100 + notification.getBytesReceived();
+            printIfDebug("Invalid Length: ");
+            printlnIfDebug(notification.getBytesReceived());
             break;
         case Notification::PARITY_ERROR:
             mReceiveError = 0x0200 + notification.getKey();
@@ -117,6 +132,9 @@ void RS485::handleNotification(const Notification& notification)
             handleNewTokenState(mState.changeStateNoInfo());
             break;
         case Notification::NO_ERROR:
+#ifdef DEBUG
+            notification.printToSerial(&Serial);
+#endif
             mReceiveError = 0;
             if (notification.getKey() == RS485State::TOKEN) {
                 handleStateNotification(notification);

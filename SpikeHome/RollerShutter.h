@@ -42,7 +42,7 @@ public:
      * @param key key/identifier of the change
      * @param data new value
      */
-    virtual void handleChange(key_t key, StateValue data);
+    virtual void handleChange(address_t senderAddress, key_t key, StateValue data);
 
     /**
      * Notifys server of current roller state

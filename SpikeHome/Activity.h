@@ -27,6 +27,7 @@
 
 #include "StdInclude.h"
 #include "State.h"
+#include "ActivityState.h"
 
 class Activity : public State {
 public:
@@ -44,7 +45,7 @@ public:
      * @param key identifies the item that changed
      * @param data new value of the item
      */
-    virtual void handleChange(key_t key, StateValue data);
+    virtual void handleChange(address_t senderAddress, key_t key, StateValue data);
 
     /**
      * Checks the sensor state. This function must be called regularily in the loop.
@@ -97,17 +98,6 @@ private:
     void initConfig();
 
     /**
-     * Increases the activity time
-     *
-     */
-    void increaseActivityTime();
-
-    /**
-     * Increases activity time on movement detection by a sensor placed at the entry of a larger room
-     */
-    void setActivityTimeOnEntryMovement();
-
-    /**
      * Handles a command comming from fs20 device
      * @param value command value (bits 2..10) including command suffix (bits 0..1) command 0 switches activity off
      * command 0x11 switches activity on
@@ -116,13 +106,15 @@ private:
 
     /**
      * Calculates the time to set in seconds
+     * @Param activityCount an activity weight value from 0 (no activity), 1 (entered), ...
      * @return time to set in seconds
      */
-    time_t calcTimeInSeconds();
+    time_t calcTimeInSeconds(uint8_t activityCount);
+
+    ActivityState mState;
 
     time_t mActivityTimeInMilliseconds;
-    uint8_t mMoveActiveCount;
-    uint8_t mActivityCount;
+    bool    mLightSwichtdOnByCommand;
 
     value_t mTimeFirstSignalInSeconds;
     value_t mIncreaseTimeNextSignalInSeconds;

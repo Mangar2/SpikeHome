@@ -41,7 +41,7 @@ public:
      * @param key identifies the item that changed
      * @param data new value of the item
      */
-    virtual void handleChange(key_t key, StateValue data)
+    virtual void handleChange(address_t senderAddress, key_t key, StateValue data)
     {
         if (key == mStatusKey) {
             digitalWrite(mPin, data.isZero() ? LOW : HIGH);

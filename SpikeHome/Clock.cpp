@@ -15,57 +15,49 @@
 
 #include "Clock.h"
 
-time_t Clock::timestamp;
-bool   Clock::initialized = false;
 
-
-Clock::Clock(device_t deviceNo) : NotifyTarget(deviceNo), loops(0)
+Clock::Clock(device_t deviceNo) : NotifyTarget(deviceNo), loops(0), initialized(false)
 {
     NotifyTarget::setCheckMask(NotifyTarget::CHECKSTATE_ALLWAYS);
 }
 
+
+void Clock::setTimeInMinutes(value_t timeInMinutes)
+{
+    mCurTime = timeInMinutes;
+    initialized = true;
+    loops = 0;
+    notify(CLOCK_NOTIFICATION, mCurTime);
+}
+
 void Clock::checkState(time_t scheduleLoops)
 {
+    value_t newTimeInMinutes;
     if (initialized) {
         loops++;
-        if (loops >= NotifyTarget::MILLISECONDS_IN_A_SECOND / NotifyTarget::MILLISECONDS_PER_LOOP) {
-            loops = 0;
-            timestamp++;
-            notify(CLOCK_NOTIFICATION, (value_t) timestamp);
+        if (loops >= 65 * LOOPS_PER_SECOND) {
+            newTimeInMinutes = mCurTime + 1;
+            if (newTimeInMinutes >= MINUTES_IN_A_DAY) {
+                newTimeInMinutes -= MINUTES_IN_A_DAY;
+            }
+            setTimeInMinutes(newTimeInMinutes);
+            // Wait 65 seconds to increase the minute to see if the server sends a new minute info. But wait only 60 seconds
+            // for the following minutes if the server stopped sending
+            loops = 5 * NotifyTarget::LOOPS_PER_SECOND;
         }
     }
 }
 
-void Clock::handleChange(key_t key, StateValue value)
+void Clock::handleChange(address_t senderAddress, key_t key, StateValue value)
 {
-    switch (key) {
-        case CLOCK_KEY:
-            setTime(value.toInt() * 60L);
-            break;
-    }
+    if ((key == CLOCK_KEY) && (value.toInt() < 60 * 24)) {
+        setTimeInMinutes(value.toInt());
+     }
 }
 
-void Clock::getTimeOfDay(timeOfDay_t buf)
+bool Clock::notifyServer(uint16_t loopCount)
 {
-    uint16_t hours = getHours();
-    uint16_t minutes = getMinutes();
-    uint16_t seconds = getSeconds();
-    buf[0] = '0' + hours / 10;
-    buf[1] = '0' + hours % 10;
-    buf[2] = ':';
-    buf[3] = '0' + minutes / 10;
-    buf[4] = '0' + minutes % 10;
-    buf[5] = ':';
-    buf[6] = '0' + seconds / 10;
-    buf[7] = '0' + seconds % 10;
-    buf[8] = 0;
+    sendToServer('c', mCurTime);
+    return true;
 }
 
-void Clock::printTimeOfDay()
-{
-#ifdef DEBUG
-    timeOfDay_t buf;
-    getTimeOfDay(timestamp, buf);
-    printlnIfDebug(buf);
-#endif
-}

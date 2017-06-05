@@ -72,7 +72,7 @@ bool RollerShutter::notifyServer()
     return sendToServer(ROLLER_SHUTTER_KEY, target_t(mRollerStatus));
 }
 
-void RollerShutter::handleChange(key_t key, StateValue data)
+void RollerShutter::handleChange(address_t senderAddress, key_t key, StateValue data)
 {
     uint16_t dataInt = data.toInt();
     if (key == ROLLER_SHUTTER_KEY) {

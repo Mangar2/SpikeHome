@@ -24,24 +24,17 @@ class Clock : public NotifyTarget
 {
 
 public:
-
-    typedef char timeOfDay_t[9];
-
     /**
-     * Constructor of clock, and sets the device number
-     * @param deviceNo number of device the clock belongs to
+     * Initializes the clock
+     * @param deviceNo device the clock belongs to
      */
     Clock(device_t deviceNo);
 
     /**
-     * Sets the time (unix timestamp)
-     * @param time
+     * Sets the time in minutes
+     * @param timeInMinutes
      */
-    static void setTime(time_t time)
-    {
-        timestamp = time;
-        initialized = true;
-    }
+    void setTimeInMinutes(value_t timeInMinutes);
 
     /**
      * Needs to be called every 10 ms, updates the time
@@ -54,46 +47,38 @@ public:
      * @param key type of change
      * @param value value of change
      */
-    virtual void handleChange(key_t key, StateValue value);
+    virtual void handleChange(address_t senderAddress, key_t key, StateValue value);
 
     /**
-     * Gets the seconds of current timestamp
+     * Send notifications to the server.
+     * @param loopCount amount of notify loops already passed. May be used to select different values to send
+     * @return true, if all notification send
      */
-    static uint16_t getSeconds()
+    virtual bool notifyServer(uint16_t loopCount);
+
+    /**
+     * Gets the minutes of current time
+     */
+    uint8_t getMinutes()
     {
-        return timestamp % 60;
+        return mCurTime % 60;
     }
 
     /**
-     * Gets the minutes of current timestamp
+     * Get the hours of current time
      */
-    static uint16_t getMinutes()
+    uint8_t getHours()
     {
-        return (timestamp / 60) % 60;
+        return (mCurTime / 60);
     }
 
-    /**
-     * Get the hours of current timestamp
-     */
-    static uint16_t getHours()
-    {
-        return (timestamp / (60 * 60)) % 24;
-    }
+private:
 
-    /**
-     * Gets the time of day in format HH:MM:SS
-     * @param buf 9 byte buffer to receive the time of day
-     */
-    static void getTimeOfDay(timeOfDay_t buf);
+    value_t mCurTime;
+    uint16_t loops;
+    bool initialized;
 
-    /**
-     * Prints the time of day to serial (debug mode only)
-     */
-    static void printTimeOfDay();
-
-    static time_t timestamp;
-    static bool   initialized;
-    uint8_t loops;
+    const static value_t MINUTES_IN_A_DAY = 60 * 24;
 
 };
 

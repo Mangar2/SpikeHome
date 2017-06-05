@@ -71,17 +71,19 @@ public:
     /**
      * Notifies all objects/sensors of a device of a configuration change
      * @param deviceNo number of device
+     * @param senderAddress address of the sender
      * @param key key/identifier of the change
      * @param value new value
      */
-    static void notifyConfigChange(device_t deviceNo, key_t key, value_t value);
+    static void notifyChange(device_t deviceNo, address_t senderAddress, key_t key, value_t value);
 
     /**
      * Broadcasts a change to all devices
+     * @param senderAddress address of the sender
      * @param key key of the change
      * @param value value of the change
      */
-    static void broadcastChange(key_t key, value_t value);
+    static void broadcastChange(address_t senderAddress, key_t key, value_t value);
 
 private:
 

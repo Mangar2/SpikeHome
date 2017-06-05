@@ -20,9 +20,9 @@
 SerialIO::SerialIO(device_t deviceAmount)
 {
     mDeviceAmount = deviceAmount;
-    mReceiverAddress = Device::addConfigValue(0, NotifyTarget::SERVER_ADDRESS_KEY, 1);
+    mReceiverAddress = Device::addConfigValue(0, NotifyTarget::SERVER_ADDRESS_KEY, SERVER_ADDRESS);
     for (device_t deviceNo = 0; deviceNo < deviceAmount; deviceNo++) {
-        mSenderAddress[deviceNo] = Device::addConfigValue(deviceNo, NotifyTarget::ADDRESS_KEY, 127);
+        mSenderAddress[deviceNo] = Device::addConfigValue(deviceNo, NotifyTarget::ADDRESS_KEY, ADDRESS_NOT_SET);
     }
 }
 
@@ -63,26 +63,27 @@ void SerialIO::notify(const Notification& notification)
 {
     key_t key = notification.getKey();
     value_t value = notification.getValueInt();
-    address_t address = notification.getReceiverAddress();
-    device_t deviceNo = getDeviceNoFromAddress(address);
+    address_t receiverAddress = notification.getReceiverAddress();
+    address_t senderAddress = notification.getSenderAddress();
+    device_t deviceNo = getDeviceNoFromAddress(receiverAddress);
 
     if (deviceNo != -1 && deviceNo < MAX_DEVICE_AMOUNT) {
 
-        if (key == NotifyTarget::SERVER_ADDRESS_KEY) {
-            if (value > 0 && value < 127) {
+        if (key == NotifyTarget::SERVER_ADDRESS_KEY && senderAddress == SerialIO::SERVER_ADDRESS) {
+            if (value != BROADCAST_ADDRESS && value < ADDRESS_NOT_SET) {
                 Device::setConfigValue(0, key, value);
                 mReceiverAddress = value;
             }
-        } else if (key == NotifyTarget::ADDRESS_KEY) {
-            if (value > 1 && value < 127) {
+        } else if (key == NotifyTarget::ADDRESS_KEY && senderAddress == SerialIO::SERVER_ADDRESS && receiverAddress != BROADCAST_ADDRESS) {
+            if (value > SERVER_ADDRESS && value < ADDRESS_NOT_SET) {
                 Device::setConfigValue(deviceNo, key, value);
                 mSenderAddress[deviceNo] = value;
             }
         } else {
-            if (address == 0) {
-                Schedule::broadcastChange(key, value);
+            if (receiverAddress == BROADCAST_ADDRESS) {
+                Schedule::broadcastChange(senderAddress, key, value);
             } else {
-                Schedule::notifyConfigChange(deviceNo, key, value);
+                Schedule::notifyChange(deviceNo, senderAddress, key, value);
             }
         }
     }

@@ -29,6 +29,11 @@ class SerialIO
 
 public:
 
+    static const address_t BROADCAST_ADDRESS         = 0;
+    static const address_t SERVER_ADDRESS            = 1;
+    static const address_t ADDRESS_NOT_SET           = 127;
+
+
     /**
      * Initializes a new serial io interface
      * @param deviceAmount amount of devices receiving/sending data
@@ -113,7 +118,6 @@ protected:
      */
     device_t getDeviceNoFromAddress(address_t address);
 
-    static const address_t BROADCAST_ADDRESS         = 0;
 
     device_t  mDeviceAmount;
     address_t mReceiverAddress;

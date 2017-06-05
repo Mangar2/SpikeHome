@@ -20,7 +20,7 @@ BrightnessSensor::BrightnessSensor(device_t deviceNo, pin_t analogPin)
 : State(deviceNo, BRIGHTNESS_NOTIFICATION), mPin(analogPin)
 {
     State::setPullup(analogPin);
-    mFullOnBrightness = addConfigValue(FULL_ON_VALUE_KEY, MAX_ANALOG_READ_VALUE);
+    mFullOnBrightness = addConfigValue(FULL_ON_VALUE_KEY, MAX_ANALOG_READ_VALUE / 2);
 }
 
 bool BrightnessSensor::hasChanged(StateValue curValue, StateValue lastValue)
@@ -49,13 +49,13 @@ StateValue BrightnessSensor::getValue()
     return StateValue(curValueInPercent);
 }
 
-void BrightnessSensor::handleChange(key_t key, StateValue data)
+void BrightnessSensor::handleChange(address_t senderAddress, key_t key, StateValue data)
 {
     if (key == FULL_ON_VALUE_KEY) {
         value_t value = data.toInt();
-        if (value > (MAX_ANALOG_READ_VALUE / 8) && value < MAX_ANALOG_READ_VALUE) {
+        if (value > (MAX_ANALOG_READ_VALUE / 8) && value < MAX_ANALOG_READ_VALUE - 24) {
             setConfigValue(FULL_ON_VALUE_KEY, value);
-            value = mFullOnBrightness;
+            mFullOnBrightness = value;
         }
     }
 };

@@ -41,7 +41,7 @@ public:
     * @param notifyType type of the change
     * @param float data new value
     */
-    virtual void handleChange(key_t notifyType, float data) {};
+    virtual void handleChange(address_t senderAddress, key_t notifyType, float data) {};
 
     /**
      * Reads an analog value from an analog input pin
@@ -125,7 +125,7 @@ protected:
 
 private:
 
-    static const time_t MIN_LOOPS_BETWEEN_SEND_IN_SECONDS = 5 * 100;
+    static const time_t MIN_LOOPS_BETWEEN_SEND_IN_SECONDS = 5 * LOOPS_PER_SECOND;
 };
 
 #endif //STATE_H

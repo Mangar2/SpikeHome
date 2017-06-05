@@ -17,7 +17,7 @@
 Light::Light(device_t deviceNo, pin_t brightnessPin, pin_t lightOutputPin)
 : BrightnessSensor(deviceNo, brightnessPin)
 {
-    mLightOn = false;
+
     mLightVoltage = 0;
     mOldLightVoltage = 0;
     mLightOutputPin = lightOutputPin;
@@ -41,6 +41,7 @@ void Light::initConfig()
 void Light::setTargetBrightness(value_t brightnessInPercent)
 {
     if (brightnessInPercent >= 0 && brightnessInPercent <= 300) {
+        mState.targetBrightnessChanged(mTargetBrightness, brightnessInPercent);
         mTargetBrightness = brightnessInPercent;
         setConfigValue(TARGET_BRIGHTNESS_KEY, mTargetBrightness);
         mMaxLightVoltage = 0;
@@ -77,9 +78,10 @@ void Light::setDimmingDelay(value_t dimmingDelayInMilliseconds)
 
 void Light::setMaximumBrightness(value_t brightnessInPercent)
 {
-    if (brightnessInPercent >= 30 && brightnessInPercent <= 200) {
+    if (brightnessInPercent >= 10 && brightnessInPercent <= 200) {
         mMaximumBrightness = brightnessInPercent;
         setConfigValue(MAXIMUM_BRIGHTNESS_KEY, brightnessInPercent);
+        mState.checkForDarkness(isDarkEnoughToSwitchOnLight());
     }
 }
 
@@ -90,7 +92,7 @@ void Light::handleFS20Command(value_t value)
     printVariableIfDebug(command);
     printVariableIfDebug(suffix);
     if (suffix == 1 && command == 0x11) {
-        measureLightAndAdjustSettings();
+        mState.setAdjustLight();
     } else if (command <= 0x10 && command > 0) {
         setTargetBrightness(floor(command * 6.25));
     } else if (command == 0x13) {
@@ -125,27 +127,22 @@ bool Light::isDarkEnoughToSwitchOnLight()
     return getAbsoluteValue() <= calcAbsoluteTarget(mMaximumBrightness);
 }
 
-void Light::handleChange(key_t key, StateValue data)
+void Light::handleChange(address_t senderAddress, key_t key, StateValue data)
 {
     bool signalOn = (!data.isZero());
     value_t value = data.toInt();
     switch (key) {
         case LIGHT_ON_NOTIFICATION:
-            mLightOn = signalOn;
-            if (mLightOn) {
-                mDarkEnough = isDarkEnoughToSwitchOnLight();
-            }
+            mState.setLight(signalOn, isDarkEnoughToSwitchOnLight());
             break;
         case MOVEMENT_NOTIFICATION:
-            if (mLightOn && !mDarkEnough) {
-                mDarkEnough = isDarkEnoughToSwitchOnLight();
-            }
+            mState.checkForDarkness(isDarkEnoughToSwitchOnLight());
             break;
         case SYS_TEMPERATURE_NOTIFICATION: handleSystemTemperature(data);
             break;
         case FS20_COMMMAND: handleFS20Command(value);
             break;
-        case ADJUST_LIGHT: measureLightAndAdjustSettings();
+        case ADJUST_LIGHT: mState.setAdjustLight();
             break;
         case MAXIMUM_BRIGHTNESS_KEY: setMaximumBrightness(value);
             break;
@@ -158,7 +155,7 @@ void Light::handleChange(key_t key, StateValue data)
         case DIMMING_DELAY_KEY: setDimmingDelay(value);
             break;
         default:
-            BrightnessSensor::handleChange(key, data);
+            BrightnessSensor::handleChange(0, key, data);
             break;
 
     }
@@ -166,13 +163,14 @@ void Light::handleChange(key_t key, StateValue data)
 
 bool Light::dimLight()
 {
-    int16_t lightDiff;
-    int16_t curBrightness = int16_t(getAbsoluteValue());
-    static const int16_t cStepDiff = 30;
+    int16_t voltageDiff = 0;
 
-    if (mLightOn && mDarkEnough) {
+    static const int16_t STEP_DIFF = 20;
+    static const int16_t HYSTERESE = 5;
+
+    if (mState.isUsingLight()) {
+        int16_t curBrightness = int16_t(getAbsoluteValue());
         int16_t targetBrightness = calcAbsoluteTarget(mTargetBrightness);
-
         if (mHeatAlarm == HEAT_ALARM_WARNING) {
             // Switch the lamp fully on to reduce heat
             targetBrightness = MAX_ANALOG_READ_VALUE;
@@ -180,20 +178,93 @@ bool Light::dimLight()
         if (mHeatAlarm == HEAT_ALARM_CRITICAL) {
             targetBrightness = 0;
         }
-        lightDiff = targetBrightness - curBrightness;
-        lightDiff += (lightDiff >= 0) ? cStepDiff - 10 : -cStepDiff + 10;
-        lightDiff = min(1, max(-1, lightDiff / cStepDiff));
-    } else {
-        lightDiff = -1;
+
+        voltageDiff = mState.dimmingStep(curBrightness, targetBrightness);
+    } else if (mLightVoltage > 0) {
+        voltageDiff = -1;
     }
-    return changeLightVoltage(lightDiff);
+
+    return changeLightVoltage(voltageDiff);
+}
+
+int16_t Light::calcNextVoltage(int16_t curVoltage, bool higher)
+{
+    int16_t result;
+    int16_t lowestBit;
+    for (lowestBit = 1; lowestBit < 256; lowestBit *=2 ) {
+        if ((curVoltage & lowestBit) != 0) {
+            break;
+        }
+    }
+    if (lowestBit == 1) {
+        result = curVoltage;
+    } else if (higher) {
+        result = curVoltage + lowestBit / 2;
+    } else {
+        result = curVoltage - lowestBit / 2;
+    }
+    return result;
+}
+
+int16_t Light::adjustLight(int16_t curVoltage, int16_t curBrightness)
+{
+    int16_t result = 0;
+    switch (mState.getState()) {
+        case LightState::LIGHT_MEASURE_MAX_BRIGHTNESS:
+            result = 255;
+            if (mState.isBrightnessReliable()) {
+                setFullOnBrightness(curBrightness);
+                mState.nextAdjustLightState();
+                result = 128;
+            }
+            break;
+        case LightState::LIGHT_MEASURE_MIN_VOLTAGE:
+            result = curVoltage;
+            if (mState.isBrightnessReliable()) {
+                result = calcNextVoltage(curVoltage, curBrightness < 3);
+                if (result == curVoltage) {
+                    setStartVoltage(curVoltage);
+                    mState.nextAdjustLightState();
+                    result = 128;
+                }
+            }
+            break;
+        case LightState::LIGHT_MEASURE_MAX_VOLTAGE:
+            result = curVoltage;
+            if (mState.isBrightnessReliable()) {
+                result = calcNextVoltage(curVoltage, curBrightness < mFullOnBrightness);
+                if (result == curVoltage) {
+                    setFullOnVoltage(curVoltage);
+                    mState.nextAdjustLightState();
+                    result = 128;
+                }
+            }
+            break;
+    }
+
+    if (result != 0) {
+        if (mState.isBrightnessReliable()) {
+            Serial.println(mState.getState());
+            Serial.println(curVoltage);
+            Serial.println(curBrightness);
+            Serial.println(result);
+        }
+        mState.waitForReliableBrightness();
+    }
+    return result;
 }
 
 void Light::checkState(time_t scheduleLoops)
 {
     bool isDimming = false;
+
     if (scheduleLoops % mDimmingDelay == 0) {
-        isDimming = dimLight();
+        if (mState.isAdjustProgramRunning()) {
+            mLightVoltage = adjustLight(mLightVoltage, getAbsoluteValue());
+            this->setLightVoltageToOutputPin(mLightVoltage);
+        } else {
+            isDimming = dimLight();
+        }
     }
     if ((scheduleLoops & NotifyTarget::CHECKSTATE_SELDOM) == 0 && !isDimming) {
         State::checkState(scheduleLoops);
@@ -208,98 +279,27 @@ bool Light::notifyServer(StateValue value)
     return result;
 }
 
-void Light::measureLightAndAdjustSettings()
+bool Light::hasMaxVoltage()
 {
-    setStartVoltage(calcStartVoltage() + 5);
-    setFullOnVoltage(calcFullOnVoltage());
-    setLightVoltageToOutputPin(MAX_VOLTAGE);
-    mFullOnBrightness = getAverageLightIntensity();
-    setConfigValue(FULL_ON_VALUE_KEY, mFullOnBrightness);
-    setLightVoltageToOutputPin(0);
-}
-
-uint16_t Light::calcNeededVoltage(uint16_t targetBrightness)
-{
-    int16_t curVoltage = MAX_VOLTAGE / 2;
-    int16_t voltageStep = curVoltage / 2;
-    uint16_t curLightIntensity;
-
-    while (voltageStep > 1) {
-        setLightVoltageToOutputPin(curVoltage);
-        curLightIntensity = getAverageLightIntensity();
-        if (curLightIntensity > targetBrightness) {
-            curVoltage -= voltageStep;
-        } else {
-            curVoltage += voltageStep;
-        }
-        voltageStep /= 2;
-    }
-    return curVoltage;
-}
-
-int16_t Light::calcStartVoltage()
-{
-    int16_t startVoltage;
-    const int16_t brightnessHysterese = 5;
-    setLightVoltageToOutputPin(0);
-    startVoltage = calcNeededVoltage(getAverageLightIntensity() + brightnessHysterese);
-    startVoltage = max(0, startVoltage - 5);
-    printIfDebug(F("Start voltage found: "));
-    printlnIfDebug(startVoltage);
-    return startVoltage;
-}
-
-int16_t Light::calcFullOnVoltage()
-{
-    int16_t fullOnVoltage;
-    const int16_t brightnessHysterese = 5;
-    printlnIfDebug(F("Calculating full on voltage"));
-    setLightVoltageToOutputPin(MAX_VOLTAGE);
-    fullOnVoltage = calcNeededVoltage(getAverageLightIntensity() - brightnessHysterese);
-    fullOnVoltage = min(MAX_VOLTAGE, fullOnVoltage);
-    printIfDebug(F("Full on voltage found: "));
-    printlnIfDebug(fullOnVoltage);
-    return fullOnVoltage;
-}
-
-uint16_t Light::getAverageLightIntensity(uint16_t testAmount)
-{
-    uint16_t i;
-    uint32_t lightIntensity = 0;
-    uint16_t curIntensity = 0;
-    for (i = 0; i < testAmount; i++) {
-        delay(DELAY_IN_MILLISECONDS_BETWEEN_BRIGHTNESS_MEASURES);
-        curIntensity = getAbsoluteValue();
-        lightIntensity += curIntensity;
-    }
-    lightIntensity /= testAmount;
-    printIfDebug(F("Calculated light Intensity: "));
-    printlnIfDebug(lightIntensity);
-    return uint16_t(lightIntensity);
-}
-
-bool Light::startsReduction(int16_t voltage)
-{
-    bool targetVoltageBelowCurrentVoltage = mLightVoltage > voltage;
-    return (targetVoltageBelowCurrentVoltage && (mLightVoltage > mOldLightVoltage));
+    return mLightVoltage >= (int16_t)(MAX_VOLTAGE - mStartVoltage);
 }
 
 int16_t Light::calcNewVoltage(int16_t voltageDiff)
 {
-
     int16_t newVoltage = mLightVoltage;
     bool lightIsOnButMaxDimmed;
 
     if (voltageDiff != 0) {
-        if (newVoltage + mStartVoltage > mFullOnVoltage) {
+        int16_t targetVoltage = ((mFullOnVoltage - mStartVoltage) * (mTargetBrightness + 10)) / 100;
+
+        if (mLightVoltage + mStartVoltage > mFullOnVoltage) {
             newVoltage = voltageDiff > 0 ? MAX_VOLTAGE : mFullOnVoltage;
             newVoltage -= mStartVoltage;
-        } else {
-
-            newVoltage += voltageDiff;
+        } else if (newVoltage < targetVoltage || voltageDiff < 0) {
+            newVoltage = mLightVoltage + voltageDiff;
             newVoltage = min(newVoltage, MAX_VOLTAGE - (int16_t) mStartVoltage);
             newVoltage = max(newVoltage, 0);
-            lightIsOnButMaxDimmed = mLightOn && mMaxLightVoltage > 0 && mMaxLightVoltage < 5;
+            lightIsOnButMaxDimmed = mState.isUsingLight() && mMaxLightVoltage > 0 && mMaxLightVoltage < 5;
             // Prevent blinking
             if (lightIsOnButMaxDimmed && newVoltage == 0) {
                 newVoltage = 1;
@@ -330,5 +330,7 @@ bool Light::changeLightVoltage(int16_t voltageDiff)
 void Light::setLightVoltageToOutputPin(int16_t newVoltage)
 {
     analogWrite(mLightOutputPin, newVoltage);
-    //printVariableIfDebug(newVoltage);
+    printVariableIfDebug(newVoltage);
 }
+
+

@@ -26,6 +26,7 @@
 #ifdef DEBUG
 #define printlnIfDebug(s) Serial.println(s)
 #define printIfDebug(s) Serial.print(s)
+#define printStringIfDebug(s) Serial.print(F(s))
 #define printVariableIfDebug(v) Serial.print(F(" "#v": ")); Serial.println(v);
 #elif defined LCDDEBUG
 #include "LCD.h"
@@ -35,6 +36,7 @@
 #else
 #define printlnIfDebug(s)
 #define printIfDebug(s)
+#define printStringIfDebug(s)
 #define printVariableIfDebug(v);
 #endif
 

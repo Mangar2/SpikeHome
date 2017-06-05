@@ -29,7 +29,7 @@
 #include "Schedule.h"
 #include "StatusLED.h"
 #include "WaterSensor.h"
-
+#include "MovementSensor.h"
 
 void SpikeHome::init(value_t softwareVersion, device_t deviceAmount)
 {
@@ -46,15 +46,21 @@ void SpikeHome::init(value_t softwareVersion, device_t deviceAmount)
 
 }
 
-void SpikeHome::initRS485(value_t softwareVersion, device_t deviceAmount, time_t serialSpeed, pin_t readWritePin)
+void SpikeHome::initRS485(
+        value_t softwareVersion,
+        device_t deviceAmount,
+        time_t serialSpeed,
+        pin_t readWritePin,
+        HardwareSerial* pSerial)
 {
-
-    Serial.begin(serialSpeed);
+    if (pSerial != &Serial) {
+        Serial.begin(serialSpeed);
+    }
+    pSerial->begin(serialSpeed);
     init(softwareVersion, deviceAmount);
     RS485* serial = new RS485(deviceAmount, readWritePin);
-    serial->initSerial(&Serial, serialSpeed);
+    serial->initSerial(pSerial, serialSpeed);
     Device::setIOHandler(serial);
-
 }
 
 void SpikeHome::initTextIO(value_t softwareVersion, device_t deviceAmount, time_t serialSpeed)
@@ -68,12 +74,14 @@ void SpikeHome::initTextIO(value_t softwareVersion, device_t deviceAmount, time_
 
 }
 
-NotifyTarget* SpikeHome::onChange(device_t deviceNo, NotifyTarget* pTarget) {
+NotifyTarget* SpikeHome::onChange(device_t deviceNo, NotifyTarget* pTarget)
+{
     Device::onChange(deviceNo, pTarget);
     return pTarget;
 }
 
-NotifyTarget* SpikeHome::onChange(NotifyTarget* pTarget) {
+NotifyTarget* SpikeHome::onChange(NotifyTarget* pTarget)
+{
     return onChange(pTarget->getDeviceNo(), pTarget);
 }
 
@@ -110,9 +118,9 @@ NotifyTarget* SpikeHome::addLight(device_t deviceNo, pin_t brightnessPin, pin_t 
     return onChange(addToSchedule(new Light(deviceNo, brightnessPin, pwmPin)));
 }
 
-NotifyTarget* SpikeHome::addMovementSensor(device_t deviceNo, pin_t pin, key_t notifyKey)
+NotifyTarget* SpikeHome::addMovementSensor(device_t deviceNo, pin_t pin, uint8_t activeValue)
 {
-    return addBinarySensor(deviceNo, pin, BinarySensor::NOT_INVERTED, notifyKey);
+    return addToSchedule(new MovementSensor(deviceNo, pin, activeValue));
 }
 
 NotifyTarget* SpikeHome::addRollerShutter(device_t deviceNo, pin_t powerPin, pin_t directionPin)
@@ -142,12 +150,12 @@ NotifyTarget* SpikeHome::addWindowSensor(device_t deviceNo, pin_t pin)
     return sensor;
 }
 
-NotifyTarget*  SpikeHome::addDHTSensor(device_t deviceNo, pin_t pin)
+NotifyTarget* SpikeHome::addDHTSensor(device_t deviceNo, pin_t pin)
 {
     return addToSchedule(new DHTSensor(deviceNo, pin));
 }
 
-NotifyTarget*  SpikeHome::addFS20UART(device_t deviceNo, pin_t rxPin, pin_t txPin)
+NotifyTarget* SpikeHome::addFS20UART(device_t deviceNo, pin_t rxPin, pin_t txPin)
 {
     return addToSchedule(new FS20UART(deviceNo, rxPin, txPin));
 }

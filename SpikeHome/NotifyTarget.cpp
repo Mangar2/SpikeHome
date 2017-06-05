@@ -12,6 +12,7 @@
 
 #include "NotifyTarget.h"
 #include "Device.h"
+#include "Schedule.h"
 
 value_t NotifyTarget::getConfigValue(key_t key)
 {
@@ -48,8 +49,24 @@ bool NotifyTarget::sendToAddress(key_t key, StateValue value, address_t receiver
     return res;
 }
 
+bool NotifyTarget::broadcast(key_t key, StateValue value)
+{
+    bool res = false;
+    if (Device::getIOHandler()->maySend()) {
+        Device::getIOHandler()->broadcast(getDeviceNo(), key, value.toInt());
+        res = true;
+    }
+    return res;
+}
+
 
 void NotifyTarget::notify(key_t key, StateValue value)
 {
     Device::getNotify(mDeviceNo).change(key, value);
 }
+
+void NotifyTarget::notifyAllDevices(key_t key, StateValue value)
+{
+    Schedule::broadcastChange(0, key, value.toInt());
+}
+

@@ -49,10 +49,10 @@ public:
     static const switch_t PIN11 = 0x0200;
     static const switch_t PIN12 = 0x0400;
     static const switch_t PIN13 = 0x0800;
-    static const switch_t PINA0 = 0x1000;
-    static const switch_t PINA1 = 0x2000;
-    static const switch_t PINA2 = 0x4000;
-    static const switch_t PINA3 = 0x8000;
+    static const switch_t SW_PINA0 = 0x1000;
+    static const switch_t SW_PINA1 = 0x2000;
+    static const switch_t SW_PINA2 = 0x4000;
+    static const switch_t SW_PINA3 = 0x8000;
 
     static const switch_t SET_MODE = 0x4000;
     static const switch_t CLEAR_MODE = 0x2000;
@@ -70,7 +70,7 @@ public:
      * @param type, element that changed
      * @param data, new value of this element
      */
-    virtual void handleChange(key_t type, StateValue data);
+    virtual void handleChange(address_t senderAddress, key_t type, StateValue data);
 
     /**
      * Change current switches by applying a value.

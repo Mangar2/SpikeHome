@@ -38,7 +38,7 @@ typedef int16_t pos_t;
 /**
  * Maximal amount of devices. The amount of devices has an impact to the memory needed
  */
-static const device_t MAX_DEVICE_AMOUNT = 4;
+static const device_t MAX_DEVICE_AMOUNT = 5;
 
 /**
  * Maximal amount of elements to notify for changes per device
@@ -58,6 +58,7 @@ static const uint16_t MAX_NOTIFY_TARGETS_PER_DEVICE = 5;
 /**
  * Basic class for all sensors
  */
+#include "INotifyTarget.h"
 #include "NotifyTarget.h"
 
 #endif // __STDINCLUDE_H

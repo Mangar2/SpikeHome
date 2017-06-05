@@ -21,7 +21,7 @@ void Notify::change(key_t key, StateValue data)
 {
     amount_t i;
     for (i = 0; i < mListenerAmount; i++) {
-        mListener[i]->handleChange(key, data);
+        mListener[i]->handleChange(0, key, data);
     }
 }
 

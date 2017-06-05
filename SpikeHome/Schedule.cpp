@@ -69,19 +69,19 @@ void Schedule::addTarget(NotifyTarget* pTarget)
     mTargetList.add(pTarget);
 }
 
-void Schedule::notifyConfigChange(device_t deviceNo, key_t key, value_t value)
+void Schedule::notifyChange(device_t deviceNo, address_t senderAddress, key_t key, value_t value)
 {
-    if (key == NotifyTarget::CONFIG_INFO_PERIOD_KEY) {
-        if  (value > 0 && deviceNo == 0) {
+    if (key == NotifyTarget::CONFIG_INFO_PERIOD_KEY && senderAddress == SerialIO::SERVER_ADDRESS) {
+        if  (value > 0 && deviceNo == 0 ) {
             mConfigInfoPeriod = value;
             Device::setConfigValue(0, key, value);
         }
     } else {
-        mTargetList.notifyConfigChange(deviceNo, key, value);
+        mTargetList.notifyChange(deviceNo, senderAddress, key, value);
     }
 }
 
-void Schedule::broadcastChange(key_t key, value_t value)
+void Schedule::broadcastChange(address_t senderAddress, key_t key, value_t value)
 {
     if (key == NotifyTarget::CONFIG_INFO_PERIOD_KEY) {
         if  (value > 0) {
@@ -90,7 +90,7 @@ void Schedule::broadcastChange(key_t key, value_t value)
         }
     } else {
         for (device_t deviceNo = 0; deviceNo < Device::getDeviceAmount(); deviceNo++) {
-            mTargetList.notifyConfigChange(deviceNo, key, value);
+            mTargetList.notifyChange(deviceNo, senderAddress, key, value);
         }
     }
 }

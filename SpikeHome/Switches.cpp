@@ -85,7 +85,7 @@ void Switches::changeSwitches(switch_t values)
     }
 }
 
-void Switches::handleChange(key_t type, StateValue data)
+void Switches::handleChange(address_t senderAddress, key_t type, StateValue data)
 {
     if (type == SWITCH_STATUS_KEY) {
         changeSwitches(data.toInt());

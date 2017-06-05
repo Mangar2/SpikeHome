@@ -37,8 +37,11 @@ class WaterSensor : public State {
          */
         virtual StateValue getValue() {
 
-            value_t state = analogReadState(mPin, INVERTED);
-            return (mLastValue.toInt() * 3 + state) / (4 * 32);
+            value_t state = analogReadState(mPin, INVERTED) / 32;
+            if (state > mLastValue.toInt()) {
+                state += 3;
+            }
+            return (mLastValue.toInt() * 3 + state) / 4;
         }
 
         pin_t  mPin;

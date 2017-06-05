@@ -41,8 +41,9 @@ public:
      * @param deviceAmount amount of subdevices to create. Each subdevice hat its own configuration.
      * @param serialSpeed speed in bits per second of the serial device
      * @param readWritePin pin to select between read and write mode
+     * @param pSerial pointer to a hardware serial device
      */
-    static void initRS485(value_t softwareVersion, device_t deviceAmount, time_t serialSpeed, pin_t readWritePin);
+    static void initRS485(value_t softwareVersion, device_t deviceAmount, time_t serialSpeed, pin_t readWritePin, HardwareSerial* pSerial = &Serial);
 
     /**
      * Initializes all with a RS485 interface, call it in the setup function of the main program
@@ -140,13 +141,10 @@ public:
      * Creates a movement sensor object and registeres it to the device
      * @param deviceNo number of the device to add the sensor
      * @param pin pin the sensor is attached to
-     * @param key key the movement sensor sends on activation. Usually selected:
-     * "a" for activity => directly turns on/off a "light" object
-     * "m" for move => used by activity object to calculate light on time (more moves, longer time)
-     * "n" for "entry move" => movement sensor at the entry of a larger room. Switches light on for a short period.
+     * @param activeValue value to send on active move
      * @return newly created and registered sensor object
      */
-    static NotifyTarget* addMovementSensor(device_t deviceNo, pin_t pin, key_t key = NotifyTarget::MOVEMENT_NOTIFICATION);
+    static NotifyTarget* addMovementSensor(device_t deviceNo, pin_t pin, uint8_t activeValue = 1);
 
     /**
      * Creates a roller shutter and registeres it to count and notify

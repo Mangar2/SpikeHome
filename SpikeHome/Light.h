@@ -5,7 +5,7 @@
  * any purpose.
  *
  * File:        Light.h
- * Purpose:     Controls LED Light based lightning sysetm steered by a brightness sensor and a PWM output
+ * Purpose:     Controls LED Light based lightning system steered by a brightness sensor and a PWM output
  *
  *
  * Author:      Volker Böhm
@@ -18,6 +18,7 @@
 #include "StdInclude.h"
 #include "State.h"
 #include "BrightnessSensor.h"
+#include "LightState.h"
 
 class Brightness;
 
@@ -44,16 +45,11 @@ public:
     virtual void checkState(time_t scheduleLoops);
 
     /**
-     * Measures the light conditions and adjusts the settings accoringly
-     */
-    void measureLightAndAdjustSettings();
-
-    /**
      * Signal changes to the light.
      * @param key type of the change
      * @param value new value
      */
-    virtual void handleChange(key_t key, StateValue value);
+    virtual void handleChange(address_t senderAddress, key_t key, StateValue value);
 
     /**
      * Sends a notification to the server
@@ -83,43 +79,26 @@ private:
     void handleFS20Command(value_t command);
 
     /**
-     * Calculates the voltage to reach a certain brightness
-     * @param targetBrightness target brightness to achieve
-     * @return needed voltage
-     */
-    uint16_t calcNeededVoltage(value_t targetBrightness);
-
-    /**
-     * Calculates the minimal voltage setting needed for dimming ligth a little bit
-     * @return maximal voltage with lights off
-     */
-    int16_t calcStartVoltage();
-
-    /**
-     * Calculates the maximal voltage setting for light is fully on
-     * @return minimal voltage with lights fully on
-     */
-    int16_t calcFullOnVoltage();
-
-    /**
-     * Gets the average brightness in a period of time
-     * @param amount of test cycles
-     * @return average measured brightness
-     */
-    uint16_t getAverageLightIntensity(uint16_t testAmount = 5);
-
-    /**
      * Dims the light up or down until it reached a brightness target
      * @retun true, if currently dimming up or down. Fals if light is not changing
      */
     bool dimLight();
 
     /**
-     * True, if light is dimming down. Function helps to prevent blinking (dim down/up continuously)
-     * @param newVoltage calculated new voltage to set to the PWM output
-     * @return true, if dimming down is detected
+     * Adjusts light settings
+     * @param curVoltage voltage to set to output pin to follow the adjust voltage program
+     * @param curBrightness current brightness sensor value
+     * @return new light voltage or 0 if adjust program is not running
      */
-    bool startsReduction(int16_t newVoltage);
+    int16_t adjustLight(int16_t curVoltage, int16_t curBrightness);
+
+    /**
+     * Calculates the next voltage value for the adjust light process
+     * @param curVoltage current voltage
+     * @param higher true, if voltage should be higher, else false
+     * @return new voltage
+     */
+    int16_t calcNextVoltage(int16_t curVoltage, bool higher);
 
     /**
      * Sets voltage to the output pin by analogWrite
@@ -146,6 +125,11 @@ private:
      * @param value current system temperature of the light steering transistor
      */
     void handleSystemTemperature(StateValue value);
+
+    /**
+     * @return true, if the current PWM output voltage is the maximal possible voltage
+     */
+    bool hasMaxVoltage();
 
     /**
      * Sets a new startVoltage
@@ -179,14 +163,13 @@ private:
     static const uint16_t HEAT_ALARM_WARNING = 1;
     static const uint16_t HEAT_ALARM_CRITICAL = 2;
     static constexpr float HEAT_HYSTERESE = 1.1;
-    static constexpr float HEAT_WARNING_VALUE = 50;
-    static constexpr float HEAT_CRITICAL_VALUE = 70;
+    static constexpr float HEAT_WARNING_VALUE = 70;
+    static constexpr float HEAT_CRITICAL_VALUE = 80;
 
     pin_t mLightOutputPin;
     uint16_t mHeatAlarm;
 
-    bool mLightOn;
-    bool mDarkEnough;
+    LightState mState;
     int16_t mLightVoltage;
     int16_t mOldLightVoltage;
     int16_t mMaxLightVoltage;
