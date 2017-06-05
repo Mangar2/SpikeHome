@@ -1,7 +1,7 @@
 # SpikeHome
 Library to use Arduino as a home automation device 
 
-<h1>Readme to Version 10</h1>
+<h1>Readme to Version 1.0</h1>
 (Every new version that I deliver to all of my installed Arduino gets a new version, I do not have subversions by now).
 
 <h2>Introduction</h2>
