@@ -1,0 +1,16 @@
+{
+  "name": "SpikeHome",
+  "keywords": "arduino home automation sensor light temperature humidity",
+  "description": "Arduino library to automate your home",
+  "authors":
+  [
+    {
+      "name": "Volker Böhm",
+      "email": "mangar@yahoo.com",
+      "maintainer": true
+    }
+  ],
+  "version": "10",
+  "frameworks": "arduino",
+  "platforms": "*"
+}
