@@ -1,7 +1,8 @@
 /**
  * ---------------------------------------------------------------------------------------------------
- * This software is licensed under the GNU public license. It is furnished "as is", without any
- * support, and with no warranty, express or implied, as to its usefulness for any purpose.
+ * This software is licensed under the GNU LESSER GENERAL PUBLIC LICENSE Version 3. It is furnished
+ * "as is", without any support, and with no warranty, express or implied, as to its usefulness for
+ * any purpose.
  *
  * File:      LCDDevcie.h
  * Purpose:   Creates a new LCD Device to show Temperature, Humidity, Movement and Sys-Temp infos
@@ -32,7 +33,7 @@ public:
      * @param key type of change
      * @param value value of change
      */
-    virtual void handleChange(key_t key, StateValue value);
+    virtual void handleChange(address_t senderAddress, key_t key, StateValue value);
 
 private:
 

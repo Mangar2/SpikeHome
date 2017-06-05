@@ -1,7 +1,8 @@
 /**
  * ---------------------------------------------------------------------------------------------------
- * This software is licensed under the GNU public license. It is furnished "as is", without any
- * support, and with no warranty, express or implied, as to its usefulness for any purpose.
+ * This software is licensed under the GNU LESSER GENERAL PUBLIC LICENSE Version 3. It is furnished
+ * "as is", without any support, and with no warranty, express or implied, as to its usefulness for
+ * any purpose.
  *
  * File:      LCDDevice.cpp
  *
@@ -28,9 +29,8 @@ void LCDDevice::init()
     lcd.setCursor(0, 0);
 }
 
-void LCDDevice::handleChange(key_t key, StateValue value)
+void LCDDevice::handleChange(address_t senderAddress, key_t key, StateValue value)
 {
-    Clock::timeOfDay_t buf;
     switch (key) {
         case TEMPERATURE_NOTIFICATION:
             lcd.setCursor(0, 0);
@@ -53,8 +53,9 @@ void LCDDevice::handleChange(key_t key, StateValue value)
         case CLOCK_NOTIFICATION:
             lcd.setCursor(0,2);
             lcd.print(F("Clock    : "));
-            Clock::getTimeOfDay(buf);
-            lcd.print(buf);
+            lcd.print(value.toInt() / 60);
+            lcd.print(":");
+            lcd.print(value.toInt() % 60);
             break;
         default:
             lcd.setCursor(0, 3);
