@@ -1,4 +1,4 @@
-# SpikeHome
+/# SpikeHome
 Library to use Arduino as a home automation device 
 
 <h1>Readme to Version 1.1</h1>
