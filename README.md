@@ -15,7 +15,7 @@ I will add more and more Arduino based solutions to the home automation and ther
 <li>Tutorials found in "Tutorial" that you should use to learn how the library works</li>
 </ul>
 
-<h2>Version history<h2>
+<h2>Version history</h2>
   1.0 Initial Version
   1.1 Implemented a new message format. It now has a length of 9 bytes: Sender-Address, Receiver-Address, Version/Reply, Message-Length in Bytes, Key (Id), Value (2 bytes), CRM (2 bytes). It adds a version information in the upper 7 bits of the second byte, a message-length byte and it replaces the parity byte by a CRC-16. 
 
