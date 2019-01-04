@@ -297,7 +297,7 @@ RS485BinaryMessage.prototype.getHexString = function() {
  */
 RS485BinaryMessage.prototype.setV0Message = function(byteArray, startIndex) {
     var calculatedParity = this.calcParity(byteArray, startIndex, MESSAGE_SIZE_V0 - 1);
-    var receivedParity = byteArray[startIndex + 5];
+    var receivedParity = byteArray[startIndex + 6];
     this.key        = String.fromCharCode(byteArray[startIndex + 3]);
     this.setValue(byteArray[startIndex + 4], byteArray[startIndex + 5]);
     this.length = MESSAGE_SIZE_V0;
@@ -325,10 +325,7 @@ RS485BinaryMessage.prototype.setV1Message = function(byteArray, startIndex) {
         this.setValue(byteArray[startIndex + 5], byteArray[startIndex + 6]);
         this.setCRC16(byteArray[startIndex + 7], byteArray[startIndex + 8], crc16);
     }
-    if (this.version !== 1) {
-        this.error = "Illegal message version " + this.version;
-    }
-    if (this.length !== 9) {
+    if (this.length !== MESSAGE_SIZE_V1) {
         this.error = "Illegal message length";
     }
     if (this.sender > 127) {
@@ -401,7 +398,7 @@ RS485BinaryMessage.prototype.setFromByteArray = function(byteArray, startIndex) 
  * @returns {Buffer} Buffer filled with message in bytecode
  */
 RS485BinaryMessage.prototype.fillByteArrayV0 = function() {
-    var byteArray    = new Buffer(MESSAGE_SIZE_V0);
+    var byteArray    = Buffer.alloc(MESSAGE_SIZE_V0);
     
     byteArray[0] = this.sender;
     byteArray[1] = this.receiver;
@@ -421,7 +418,7 @@ RS485BinaryMessage.prototype.fillByteArrayV0 = function() {
  * @returns {Buffer} Buffer filled with message in bytecode
  */
 RS485BinaryMessage.prototype.fillByteArrayV1 = function() {
-    var byteArray    = new Buffer(MESSAGE_SIZE_V1);
+    var byteArray    = Buffer.alloc(MESSAGE_SIZE_V1);
 
     byteArray[0] = this.sender;
     byteArray[1] = this.receiver;
@@ -444,11 +441,13 @@ RS485BinaryMessage.prototype.fillByteArrayV1 = function() {
  */
 RS485BinaryMessage.prototype.getByteArray = function() {
     var byteArray;
-    switch (this.version) {
-        case 0: byteArray = this.fillByteArrayV0(); break;
-        case 1: byteArray = this.fillByteArrayV1(); break;
-        default:
-            throw "Unsupported message version " + this.version;
+    if (!this.hasError()) {
+        switch (this.version) {
+            case 0: byteArray = this.fillByteArrayV0(); break;
+            case 1: byteArray = this.fillByteArrayV1(); break;
+            default:
+                throw "Unsupported message version " + this.version;
+        }
     }
 
     return byteArray;
@@ -487,6 +486,10 @@ RS485BinaryMessage.prototype.isResponseMessage = function(message) {
     return response;
 };
 
+/**
+ * Gets a string to log to a debug output
+ * @returns {string} string to log
+ */
 RS485BinaryMessage.prototype.getLogString = function () {
     'use strict';
     var now = new Date();
@@ -501,8 +504,6 @@ RS485BinaryMessage.prototype.getLogString = function () {
         } else {
             log += this.getHexString();
         }
-        log += " (t:" + statistic.total + " !:" + statistic.token + " p:" + statistic.parityError;
-        log += " l:" + statistic.insufficentData + " o:" + statistic.notForMe + ")";
     } else {
         log += this.error + " " + this.hexString;
     }

@@ -47,9 +47,10 @@ var RS485State = function(address) {
     this.timer = 0;
     this.lastEnableSend = 0;
     this.neighbour = this.NEIGHBOUR_UNKNOWN;
-    this.leftmostCeibling = this.NEIGHBOUR_UNKNOWN;
+    this.leftmostCeibling = 0;
     this.maySend = false;
     this.myAddress = address;
+    this.chain = [address];
 };
 
 /**
@@ -98,6 +99,7 @@ RS485State.prototype.getInfo = function() {
         leftmostCeibling: this.leftmostCeibling,
         neighbour: this.neighbour,
         myAddress: this.myAddress,
+        chain: this.chain
     }
 }
 
@@ -171,11 +173,26 @@ RS485State.prototype.getReceiverAddress = function() {
  * @returns {undefined}
  */
 RS485State.prototype.updateSenderAddressChain = function(senderAddress) {
-    var rightCeibling =  (this.myAddress < senderAddress) && (this.neighbour > senderAddress);
-    if (rightCeibling) {
-        this.neighbour = senderAddress;
-    }
-    this.leftmostCeibling = Math.min(this.leftmostCeibling, senderAddress);
+    RS485State.prototype.updateSenderAddressChain = function(senderAddress) {
+        var rightCeibling =  (this.myAddress < senderAddress) && (this.neighbour > senderAddress);
+        if (this.chain[this.chain.length - 1] < senderAddress) {
+            this.chain.push(senderAddress);
+        } else {
+            for (var pos = 0; pos < this.chain.length; pos++) {
+                if (this.chain[pos] == senderAddress) {
+                    break;
+                }
+                if (this.chain[pos] > senderAddress) {
+                    this.chain.splice(pos, 0, senderAddress);
+                    break;
+                }
+            }
+        }
+        if (rightCeibling) {
+            this.neighbour = senderAddress;
+        }
+        this.leftmostCeibling = Math.min(this.leftmostCeibling, senderAddress);
+    };
 };
 
 

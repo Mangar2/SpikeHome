@@ -21,10 +21,7 @@ const environmentConfig = config[environment];
 const finalConfig = Object.assign(defaultConfig, environmentConfig);
 
 var Server = require('./RS485Server');
-var myServer = new Server(finalConfig.RS485Address, finalConfig.serialPort, finalConfig.baudrate);
-
-
-myServer.createHttpServer(finalConfig.nodePort);
+var myServer = new Server(finalConfig.RS485Address, finalConfig.serialPort, finalConfig.baudrate, finalConfig.nodePort, finalConfig.sqlPort);
 
 process.on('uncaughtException', function (err){
     console.log(err);

@@ -74,15 +74,23 @@ AddressMap.prototype.addEntryToRoomToAddressMap = function(floor, room, area, ad
  * @param {string} floor floor of the device
  * @param {string} room room of the device
  * @param {string} area area of the device
+ * @throws {string} any unknown floor, room or area
  * @returns {number} address of the device
  */
 AddressMap.prototype.getDeviceAddress = function(floor, room, area) {
     var result;
     var floorMap = this.getFromObject(this.roomToAddress, floor);
-    var roomMap = this.getFromObject(floorMap, room);
-    if (roomMap !== undefined && area !== undefined && roomMap[area] !== undefined) {
-        result = roomMap[area];
+    if (floorMap === undefined) {
+        throw "unknown floor: " + floor;
     }
+    var roomMap = this.getFromObject(floorMap, room);
+    if (roomMap === undefined) {
+        throw "unknown room: " + room;
+    }
+    if (roomMap[area] === undefined) {
+        throw "unknown area: " + area;
+    }
+    result = roomMap[area];
     return result;
 }
 
@@ -93,7 +101,7 @@ AddressMap.prototype.getDeviceAddress = function(floor, room, area) {
  */
 AddressMap.prototype.getLocationFromAddress = function (address) {
     var result = { "room": "unknown", "floor": "unknown", "area": "main" };
-    if (this.addressToRoom[address] !== undefined) {
+    if (address !== undefined && this.addressToRoom[address] !== undefined) {
         result = this.addressToRoom[address];
     }
     return result;

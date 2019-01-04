@@ -14,17 +14,20 @@
 
 'use strict';
 
-var NodeModulePath = 'C:/Program Files/nodejs/node_modules';
-var SerialPort = require(NodeModulePath + '/serialport');
+var SerialPort = require('serialport');
 var Trace = require('./Trace');
 var State = require('./RS485State');
 var NetState = require('./RS485State');
+var RS484Message = require('./RS485BinaryMessage');
 var MessageList = require('./MessageList');
 var state = new State();
+const RS485DNS = require ('./RS485DNS');
 
-var RS485IO = function(messageVersion) {
+
+var RS485IO = function(messageVersion, addresses, interfaces) {
     this.messageQueue = [];
-    this.messageList;
+    this.messageList = new MessageList();
+    this.rs485DNS = new RS485DNS(addresses, interfaces);
     this.trace = new Trace();
     this.sendAmount = 0;
     // Serial port
@@ -37,15 +40,52 @@ var RS485IO = function(messageVersion) {
 }
 
 /**
- * Initializes a tree of message information
- * @param {object} addresses configuration of all addresses used in messages
- * @param {object} interfaces configuration of all interfaces used in messages
- * @returns undefined
+ * Gets address and key of a command
+ * @param {string} floor name of the floor
+ * @param {string} room name of the room
+ * @param {string} area name of the area in the room
+ * @param {string} device name of the device in the room
+ * @param {string} propertyName property (name) of the interface
+ * @returns {object} object with address and key property
  */
-RS485IO.prototype.initMessageList = function (addresses, interfaces) {
-    this.messageList = new MessageList(addresses, interfaces);
+RS485IO.prototype.getAddressAndKey = function(message) {
+    return RS485DNS.getAddressAndKey(
+        message.floor, 
+        message.room, 
+        message.area,
+        message.interfaceName,
+        message.name);
 }
 
+
+/**
+ * Adds a message to the message tree
+ * @param {object} message to add
+ */
+RS485IO.prototype.addMessageToMessageTree = function(message) {
+    this.messageList.addMessage(message);
+}
+
+
+/**
+ * Adds a message to the message tree
+ * @param {RS484BinaryMessage} message to add
+ */
+RS485IO.prototype.addBinaryMessageToMessageTree = function(message) {
+    var treeMessage = 
+    {
+        value: message.value,
+        sender: message.sender,
+        receiver: message.receiver,
+        key: message.key,
+        timestamp: message.timestamp
+    }
+    if (!message.hasError()) {
+        treeMessage.error = message.error;
+        this.rs485DNS.addSensorInfoToMessage(treeMessage);
+        this.addMessageToMessageTree(treeMessage);
+    }
+}
 
 /**
  * Sets the address
@@ -72,13 +112,17 @@ RS485IO.prototype.processTick = function () {
     var messageSent = false;
     var queueMessage;
     var message = this.state.updateStateNoMessage();
- 
+    
     messageSent = this.sendMessage(message);
     if (messageSent) {
         this.messageList.updateMessageStatistic(message);
     }
     if (this.state.maySend) {
         queueMessage = this.sendMessageFromQueue();
+        
+        // Prevent to send a message twice in the same tick.
+        this.state.setMaySend(false);
+
         if (queueMessage !== undefined) {
             this.messageList.updateMessageStatistic(queueMessage);
             messageSent = true;
@@ -86,6 +130,56 @@ RS485IO.prototype.processTick = function () {
     }
     return messageSent;
 };
+
+/**
+ * Sends the time of day in minutes as broadcast
+ */
+RS485IO.prototype.sendTimeOfDayInMinutes = function() {
+    const BROADCAST_ADDRESS = 0;
+    const REPLY = 0;
+    var date = new Date(),
+
+    timeOfDayInMinutes = date.getHours() * 60 + date.getMinutes(),
+    message = new RS484Message();
+    message.setVersionAndLength(this.curMessageVersion);
+    message.setAddresses(1, BROADCAST_ADDRESS, REPLY);
+    message.setKeyValue('C', timeOfDayInMinutes);
+    this.addMessageToSendQueue(message);
+}
+
+/**
+ * Opens the serial port to attach the arduino devices
+ * @param {string} serialPortName name of the serial port
+ * @param {number} baudrate baudrate of the serial connection
+ * @param {function} openedFunction function to call if serial port is open
+ */
+RS485IO.prototype.openArduinoPort = function (serialPortName, baudrate, openedFunction) {
+    var that = this;
+    
+    this.openSerialPort(serialPortName, baudrate,  function () {
+
+        setInterval(function () {
+            try {
+                that.processTick(that.messageList); 
+            } 
+            catch (err) {
+                console.log(err);
+            }
+        }, 100);
+
+        setInterval(function () { 
+            that.sendTimeOfDayInMinutes(); 
+        }, 1000 * 60);
+
+        that.serialPort.on('error', function(err) {
+            console.log(err);
+        });
+
+        openedFunction();
+
+    });
+}
+
 
 /**
  * Sets the version of messages to send
@@ -112,6 +206,7 @@ RS485IO.prototype.processTokenMessage = function (receivedMessage) {
     }
 }
 
+
 /**
  * Processes a message received:
  * 1. Trace the message
@@ -126,11 +221,38 @@ RS485IO.prototype.processMessageRead = function (receivedMessage) {
         if (receivedMessage.isResponseMessage(this.messageQueue[0])) {
             this.dequeue();
         }
-    }
-    if (receivedMessage.isTokenMessage()) {
-        this.processTokenMessage(receivedMessage);
+        if (receivedMessage.isTokenMessage()) {
+            this.processTokenMessage(receivedMessage);
+        } else {
+            this.addBinaryMessageToMessageTree(receivedMessage);
+        }
     } else {
-        this.messageList.addMessage(receivedMessage);
+        console.log("error: " + receivedMessage.error);
+    }
+};
+
+/**
+ * Reads messages from a serial stream and stores it to a message tree
+ * @param that pointer to the class object
+ * @param {array} stream array of received bytes
+ */
+RS485IO.prototype.readAndStoreMessages = function (stream, callback) {
+    var startIndex = 0;
+    var message = new RS484Message();
+
+    startIndex = message.setFromByteStream(stream, startIndex);
+    while (message.isComplete()) {
+        message = this.state.setFriendlyName(message);
+        this.processMessageRead(message);
+
+        if (!message.isTokenMessage()) {
+            console.log(message.hexString);
+            if (!message.hasError()) {
+                callback(message);
+            }
+        } 
+        message = new RS484Message();
+        startIndex = message.setFromByteStream(stream, startIndex);
     }
 };
 
@@ -161,7 +283,6 @@ RS485IO.prototype.addMessageToSendQueue = function (message) {
  */
 RS485IO.prototype.dequeue = function() {
     this.messageQueue.shift();
-    this.retryCount = 0;
 };
 
 /**
@@ -175,6 +296,7 @@ RS485IO.prototype.sendMessageFromQueue = function() {
         messageSend = this.messageQueue[0];
         if (this.retryCount > 10 || messageSend.reply === 0) {
             this.dequeue();
+            this.retryCount = 0;
         }
     }
     return messageSend;
@@ -208,7 +330,8 @@ RS485IO.prototype.isOpenHandler = function(serialPortName, isOpenCallback)
  */
 RS485IO.prototype.openSerialPort = function (serialPortName, baudrate, receiveDataCallback) {
     var that = this;
-    this.serialPort = new SerialPort(serialPortName , { baudrate: baudrate }, function(err) {
+
+    this.serialPort = new SerialPort(serialPortName , { baudRate: baudrate }, function(err) {
         if (err) {
             console.log('Error: ', err.message);
             console.log('Available ports: ');
@@ -222,8 +345,10 @@ RS485IO.prototype.openSerialPort = function (serialPortName, baudrate, receiveDa
     }); 
 
     this.serialPort.on('open', function() {
+
         that.isOpenHandler(serialPortName, receiveDataCallback);
     });
+
 }
 
 /**
@@ -245,6 +370,11 @@ RS485IO.prototype.traceRead = function(message) {
     } else if (message.value !== state.ENABLE_SEND && message.value !== state.REGISTRATION_REQUEST) {
         traceLevel = 3;
     }
+    if (message.hasError()) {
+        traceLevel = 0;
+        traceMessage.error = message.error;
+    }
+
     this.trace.addTrace(traceLevel, traceMessage);
 }
 
@@ -263,7 +393,7 @@ RS485IO.prototype.traceSend = function(message) {
         timestamp: message.timestamp
     }
     if (!message.isTokenMessage()) {
-        traceLevel = 1;
+        traceLevel = 0;
     } else if (message.value !== state.ENABLE_SEND) {
         traceLevel = 3;
     }

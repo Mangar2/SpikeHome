@@ -93,8 +93,8 @@ InterfaceMap.prototype.addToPropertyToKeyMap = function(interfaceName, propertyN
  * @returns {object} object with interfaceName and name (propertyname) property
  */
 InterfaceMap.prototype.getPropertyFromKey = function (key) {
-    var result = { "interfaceName": "unknown", "name": "unknown" };
-    if (this.keyToProperty[key] !== undefined) {
+    var result = { "interfaceName": "unknown key: " + key, "name": "unknown" };
+    if (key !== undefined && this.keyToProperty[key] !== undefined) {
         result = this.keyToProperty[key];
     }
     return result;
@@ -108,7 +108,13 @@ InterfaceMap.prototype.getPropertyFromKey = function (key) {
  */
 InterfaceMap.prototype.getKey = function(interfaceName, propertyName) {
     var interfaces = this.getFromObject(this.PropertyToKey, interfaceName);
+    if (interfaces === undefined) {
+        throw "unknown interface: " + interfaceName;
+    }
     var key = this.getFromObject(interfaces, propertyName);
+    if (key === undefined) {
+        throw "unknown property: " + propertyName;
+    }
     return key;
 }
 

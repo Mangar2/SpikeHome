@@ -14,10 +14,9 @@
 
 'use strict';
 
-var AddressMap = require ("./AddressMap.js");
-var InterfaceMap = require("./InterfaceMap.js");
 
-function MessageList (addresses, interfaces) {
+
+function MessageList () {
     this.messages = {};
     this.statistic = { 
         send: {
@@ -33,35 +32,8 @@ function MessageList (addresses, interfaces) {
             errors: {total: 0}
         }
     };
-    this.addressMap = new AddressMap(addresses);
-    this.interfaceMap = new InterfaceMap(interfaces);
-    this.total = 0;
-    this.token = 0;
-    this.parityError = 0;
-    this.insufficentData = 0;
-    this.notForMe = 0;
-    this.CCITT_CRC16_START_VALUE = 0xFFFF;
-    this.CCITT_CRC16_POLYNOME = 0x1021;
-    this.BITS_IN_BYTE = 8;
 }
 
-/**
- * Gets address and key of a command
- * @param {string} floor name of the floor
- * @param {string} room name of the room
- * @param {string} area name of the area in the room
- * @param {string} device name of the device in the room
- * @param {string} propertyName property (name) of the interface
- * @returns {object} object with address and key property
- */
-MessageList.prototype.getAddressAndKey = function(floor, room, area, device, propertyName) {
-    var address = this.addressMap.getDeviceAddress(floor, room, area);
-    var key = this.interfaceMap.getKey(device, propertyName);
-    return {
-        address: address, 
-        key: key
-    }
-}
 
 /**
  * Savely gets a property from an object. 
@@ -84,22 +56,22 @@ MessageList.prototype.getFromObject = function(object, propertyName, addIfUndefi
 /**
  * Adds a Message to a floor message structure
  * @param {object} floorMessages hirachical structure to store all messages of a floor
- * @param {object} addressInfo information to the current address of the message
  * @param {object} message message to add
  */
-MessageList.prototype.addMessageToFloor = function(floorMessages, addressInfo, message) {
-    var roomMessages = this.getFromObject(floorMessages, addressInfo.room, {});
-    this.addMessageToRoom(roomMessages, addressInfo, message);
+MessageList.prototype.addMessageToFloor = function(floorMessages, message) {
+    var roomMessages = this.getFromObject(floorMessages, message.room, {});
+    message.room = undefined;
+    this.addMessageToRoom(roomMessages, message);
 }
 
 /**
  * Adds a Message to a room messages structure
  * @param {object} roomMessages hirachical structure to store all messages of a room
- * @param {object} addressInfo information to the current address of the message
  * @param {object} message message to add
  */
-MessageList.prototype.addMessageToRoom = function(roomMessages, addressInfo, message) {
-    var areaMessages = this.getFromObject(roomMessages, addressInfo.area, {});
+MessageList.prototype.addMessageToRoom = function(roomMessages, message) {
+    var areaMessages = this.getFromObject(roomMessages, message.area, {});
+    message.area = undefined;
     this.addMessageToArea(areaMessages, message);
 }
 
@@ -109,19 +81,19 @@ MessageList.prototype.addMessageToRoom = function(roomMessages, addressInfo, mes
  * @param {object} message message to add
  */
 MessageList.prototype.addMessageToArea = function(areaMessages, message) {
-    var interfaceProperty = this.interfaceMap.getPropertyFromKey(message.key);
-    var deviceMessages = this.getFromObject(areaMessages, interfaceProperty.interfaceName, {});
-    this.addMessageToDevice(deviceMessages, interfaceProperty, message);
+    var deviceMessages = this.getFromObject(areaMessages, message.interfaceName, {});
+    message.interfaceName = undefined;
+    this.addMessageToDevice(deviceMessages, message);
 }
 
 /**
  * Adds a Message to a device messages structure
  * @param {object} deviceMessages hirachical structure to store all messages of a device
- * @param {object} interfaceProperty interface property information
  * @param {object} message message to add
  */
-MessageList.prototype.addMessageToDevice = function(deviceMessages, interfaceProperty, message) {
-    var sensorMessages = this.getFromObject(deviceMessages, interfaceProperty.name, {"current":undefined, "history": []});
+MessageList.prototype.addMessageToDevice = function(deviceMessages, message) {
+    var sensorMessages = this.getFromObject(deviceMessages, message.name, {"current":undefined, "history": []});
+    message.name = undefined;
     this.addMessageToSensor(sensorMessages, message);
 }
 
@@ -131,15 +103,7 @@ MessageList.prototype.addMessageToDevice = function(deviceMessages, interfacePro
  * @param {object} message message used to update the statistic
  */
 MessageList.prototype.indentifyUnexpectdChange = function(sensorMessages) {
-    var history = sensorMessages.history;
-    var current = sensorMessages.current;
-    if (history !== undefined && current !== undefined) {
-        var currentValue = sensorMessages.current.value;
-        var change = 0;
-        for (historyIndex = 1; historyIndex < history.length; historyIndex++) {
-
-        }
-    }
+// Todo:
 }
 
 /**
@@ -191,18 +155,9 @@ MessageList.prototype.addMessageToSensor = function(sensorMessages, message) {
     var history = sensorMessages.history;
     var event = this.updateStatistic(sensorMessages, message);
     if (message.send === true) {
-        sensorMessages.command = {
-            "value" : message.getValueFriendlyName(),
-            "timestamp" : message.timestamp,
-            "reason" : message.reason
-        }
+        sensorMessages.command = message;
     } else {
-        sensorMessages.current = {
-            "value" : message.getValueFriendlyName(),
-            "target": message.receiver,
-            "error" : message.error,
-            "timestamp": message.timestamp
-        };
+        sensorMessages.current = message;
         if (event !== undefined) {
             sensorMessages.current.event = event;
         }
@@ -246,13 +201,10 @@ MessageList.prototype.updateMessageStatistic = function(message) {
  * @returns undefined
  */
 MessageList.prototype.addMessage = function(message) {
-    var address = message.send ? message.receiver : message.sender;
-
-    if (!message.hasError()) {
-        var location = this.addressMap.getLocationFromAddress(address);
-        var floorMessages = this.getFromObject(this.messages, location.floor, {});
-        this.addMessageToFloor(floorMessages, location, message);
-    }
+    //var address = message.send ? message.receiver : message.sender;
+    var floorMessages = this.getFromObject(this.messages, message.floor, {});
+    message.floor = undefined;
+    this.addMessageToFloor(floorMessages, message);
 };
 
 /**
