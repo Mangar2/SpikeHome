@@ -1,7 +1,7 @@
 # SpikeHome
 Library to use Arduino as a home automation device 
 
-<h1>Readme to Version 1.0</h1>
+<h1>Readme to Version 1.1</h1>
 (Every new version that I deliver to all of my installed Arduino gets a new version, I do not have subversions by now).
 
 <h2>Introduction</h2>
@@ -15,6 +15,10 @@ I will add more and more Arduino based solutions to the home automation and ther
 <li>Tutorials found in "Tutorial" that you should use to learn how the library works</li>
 </ul>
 
+<h2>Version history<h2>
+  1.0 Initial Version
+  1.1 Implemented a new message format. It now has a length of 9 bytes: Sender-Address, Receiver-Address, Version/Reply, Message-Length in Bytes, Key (Id), Value (2 bytes), CRM (2 bytes). It adds a version information in the upper 7 bits of the second byte, a message-length byte and it replaces the parity byte by a CRC-16. 
+
 <h2>Why Arduino?</h2>
 I do not like to use available sensors anymore because: 
 <ul>
@@ -24,6 +28,7 @@ Nothing I bought yet was reliable enough (365 days in a year working without any
 <li>Once installed you do not need to regularly update it with new software version, reboot them, … </li>
 <li>The sensors are not both intelligent and remote controllable (example: you get an electric roller belt with high automation but it is not controllable by a PC)</li>
 <li>You get everything you want for Arduinos, all kind of sensors, all kind of actors</li>
+
 <li>Arduinos are good protected against hacking. If you attach them with a RS485 bus you are not able to change the code remotely.</li>
 </ul>
 
@@ -60,6 +65,10 @@ Currently I deliver a communication based on the serial – usb connection using
 <h2>Limits</h2>
 The software design is limited by the available memory of the Arduino. I would like to have more memory and provide a better design in some places. 
 Currently I do not provide the PC side of the RS485 communication. I have the source code based on node.js but it is not yet usable for others. Especially because it is closely linked to specific database tables that are historically grown.
+
+<h2>Node-Js Version 0.1</h2>
+I have added node.js sources to connect to the RS485 BUS. It works already well, but I am not fully happy with the archtitecture and it contains some compatibility code (like a call to store the data in an SQL server). I need to remove this from the library and put it in the main file (supporting a "persistence callback"). Still it will work and writes some error messages to stdio. 
+The Data of the arduinos is only held in memory. The library does not include any persistence. Persistence is a topic that should be realized in a different library or even in a different micro-service. The data in memory can be fetched and modified by a small REST API (having very poor error handling yet).
 
 <h2>Next topics</h2>
 <ul>
