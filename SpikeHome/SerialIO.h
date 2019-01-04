@@ -22,7 +22,7 @@
 #define	__SERIALIO_H
 
 #include "StdInclude.h"
-#include "Notification.h"
+#include "NotificationV2.h"
 
 class SerialIO
 {
@@ -94,13 +94,13 @@ protected:
      * sends a notification
      * @param notification notification to write
      */
-    virtual void sendNotification(const Notification& notification) = 0;
+    virtual void sendNotification(const NotificationV2& notification) = 0;
 
     /**
      * Replies to a notification by sending the same info back to the sender
      * @param notification notification to reply to
      */
-    void reply(const Notification& notification);
+    void reply(const NotificationV2& notification);
 
 
     /**
@@ -109,7 +109,7 @@ protected:
      * @param notification
      * @return number of device this notification has been sent to
      */
-    void notify(const Notification& notification);
+    void notify(const NotificationV2& notification);
 
     /**
      * Loops through the list of devices for a matching address. Returns the device number if found and -1 else

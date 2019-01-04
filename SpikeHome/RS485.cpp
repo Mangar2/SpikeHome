@@ -25,9 +25,9 @@ RS485::RS485(device_t deviceAmount, pin_t readWritePin)
     digitalWrite(mReadWritePin, RS485_RECEIVE);  // Enable Receive
 }
 
-void RS485::sendNotification(const Notification& notification)
+void RS485::sendNotification(const NotificationV2& notification)
 {
-    int32_t bitsPerNotification = BITS_PER_CHAR * int32_t(Notification::BUFFER_SIZE);
+    int32_t bitsPerNotification = BITS_PER_CHAR * int32_t(NotificationV2::BUFFER_SIZE);
 
     digitalWrite(mReadWritePin, RS485_TRANSMIT);
     // Short delay to ensure write state is set on RS485
@@ -58,7 +58,7 @@ void RS485::pollNonBlocking()
                 i++;
             }
         }
-    } while ((timeLastCharRead + timeoutInMilliseconds > millis()) && (i < Notification::BUFFER_SIZE));
+    } while ((timeLastCharRead + timeoutInMilliseconds > millis()) && (i < NotificationV2::BUFFER_SIZE));
 #ifdef DEBUG
     if (i > 0) {
         for (int j = 0; j < i; j++) {
@@ -69,11 +69,11 @@ void RS485::pollNonBlocking()
     }
 #endif
 
-    handleNotification(Notification(mReceiveBuf, i));
+    handleNotification(NotificationV2(mReceiveBuf, i));
 
 }
 
-void RS485::handleStateNotification(const Notification& notification)
+void RS485::handleStateNotification(const NotificationV2& notification)
 {
     value_t value = notification.getValueInt();
 
@@ -83,12 +83,19 @@ void RS485::handleStateNotification(const Notification& notification)
     handleNewTokenState(mState.changeState(value, notForMe));
 }
 
-void RS485::handleCommandNotification(const Notification& notification)
+void RS485::handleCommandNotification(const NotificationV2& notification)
 {
-    if (notification.isAcknowledge()) {
-        reply(notification);
+#ifdef _DEBUG
+    uint8_t state = mState.getState();
+#endif    
+    sendReceiveError();
+    printVariableIfDebug(state);
+    if (!mState.ignoreCommands()) {
+        if (notification.isAcknowledge()) {
+            reply(notification);
+        }
+        notify(notification);
     }
-    notify(notification);
 }
 
 void RS485::handleNewTokenState(value_t stateType)
@@ -100,14 +107,14 @@ void RS485::handleNewTokenState(value_t stateType)
         }
 
         if (stateType == RS485State::REGISTRATION_INFO || (mStateChanged && maySend())) {
-            sendToServer(0, NotifyTarget::STATE_NOTIFICATION, value_t(mState.getState()) * 100 + mState.getReceiverAddress());
+            sendToServer(0, NotifyTarget::STATE_NOTIFICATION, value_t(mState.getState()) * 0x100 + mState.getReceiverAddress());
             sendToServer(0, NotifyTarget::MEM_LEFT_NOTIFICATION, Trace::getFreeMemory());
             mStateChanged = false;
         }
-        if (stateType == RS485State::ENABLE_SEND) {
-            sendNotification(Notification(
+        if (stateType == RS485State::PASS_SEND_TOKEN_TO_NEXT_DEVICE) {
+            sendNotification(NotificationV2(
                 RS485State::TOKEN,
-                RS485State::ENABLE_SEND,
+                RS485State::PASS_SEND_TOKEN_TO_NEXT_DEVICE,
                 mSenderAddress[0],
                 mState.getReceiverAddress()));
         } else if (stateType != RS485State::STATE_CHANGED) {
@@ -116,22 +123,22 @@ void RS485::handleNewTokenState(value_t stateType)
     }
 }
 
-void RS485::handleNotification(const Notification& notification)
+void RS485::handleNotification(const NotificationV2& notification)
 {
 
     switch(notification.getError()) {
-        case Notification::INVALID_LENGTH_ERROR:
+        case NotificationV2::INVALID_LENGTH_ERROR:
             mReceiveError = 0x0100 + notification.getBytesReceived();
             printIfDebug("Invalid Length: ");
             printlnIfDebug(notification.getBytesReceived());
             break;
-        case Notification::PARITY_ERROR:
+        case NotificationV2::CHECK_ERROR:
             mReceiveError = 0x0200 + notification.getKey();
             break;
-        case Notification::NO_DATA:
+        case NotificationV2::NO_DATA:
             handleNewTokenState(mState.changeStateNoInfo());
             break;
-        case Notification::NO_ERROR:
+        case NotificationV2::NO_ERROR:
 #ifdef DEBUG
             notification.printToSerial(&Serial);
 #endif

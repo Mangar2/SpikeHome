@@ -36,30 +36,30 @@ void SerialIO::initSerial(HardwareSerial* pSerial, time_t serialSpeed)
 
 void SerialIO::sendToServer(device_t deviceNo, key_t key, value_t value)
 {
-    Notification notification(key, value, mSenderAddress[deviceNo], mReceiverAddress);
+    NotificationV2 notification(key, value, mSenderAddress[deviceNo], mReceiverAddress);
     sendNotification(notification);
 }
 
 void SerialIO::broadcast(device_t deviceNo, key_t key, value_t value)
 {
-    Notification notification(key, value, mSenderAddress[deviceNo], BROADCAST_ADDRESS);
+    NotificationV2 notification(key, value, mSenderAddress[deviceNo], BROADCAST_ADDRESS);
     sendNotification(notification);
 }
 
 void SerialIO::sendToAddress(device_t deviceNo, key_t key, value_t value, address_t receiverAddress)
 {
-    Notification notification(key, value, mSenderAddress[deviceNo], receiverAddress);
+    NotificationV2 notification(key, value, mSenderAddress[deviceNo], receiverAddress);
     sendNotification(notification);
 }
 
-void SerialIO::reply(const Notification& notification)
+void SerialIO::reply(const NotificationV2& notification)
 {
-    Notification reply(notification.getKey(), notification.getValueInt(),
+    NotificationV2 reply(notification.getKey(), notification.getValueInt(),
             notification.getReceiverAddress(), notification.getSenderAddress());
     sendNotification(reply);
 }
 
-void SerialIO::notify(const Notification& notification)
+void SerialIO::notify(const NotificationV2& notification)
 {
     key_t key = notification.getKey();
     value_t value = notification.getValueInt();

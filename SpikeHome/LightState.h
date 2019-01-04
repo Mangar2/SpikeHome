@@ -30,6 +30,12 @@ public:
     static const uint8_t LIGHT_MEASURE_MIN_VOLTAGE      = 17;
     static const uint8_t LIGHT_MEASURE_MAX_VOLTAGE      = 18;
 
+    static const int16_t DIM_UP                          = 1;
+    static const int16_t DIM_STOP                        = 0;
+    static const int16_t DIM_DOWN                        = -1;
+
+    static const int8_t RESET_WAIT                       = 0;
+
 
     LightState() : mState(LIGHT_OFF), wait(0) {}
 
@@ -93,7 +99,7 @@ public:
      */
     int16_t dimmingStep(int16_t curBrightness, int16_t targetBrightness)
     {
-        int16_t result = 0;
+        int16_t dimming = DIM_STOP;
 
         switch (mState) {
             case LIGHT_INC_BRIGHTNESS:
@@ -101,7 +107,7 @@ public:
                     setStateKeepBrightness();
                     printVariableIfDebug(mState);
                 } else {
-                    result = 1;
+                    dimming = DIM_UP;
                 }
                 break;
             case LIGHT_DEC_BRIGHTNESS:
@@ -109,20 +115,20 @@ public:
                     setStateKeepBrightness();
                     printVariableIfDebug(mState);
                 } else {
-                    result = -1;
+                    dimming = DIM_DOWN;
                 }
                 break;
             case LIGHT_KEEP_BRIGHTNESS:
-                result = handleKeepBrightness(curBrightness, targetBrightness);
+                dimming = handleKeepBrightness(curBrightness, targetBrightness);
                 break;
             case LIGHT_MEASURE_MIN_VOLTAGE:
                 mState = LIGHT_OFF;
                 break;
-            case LIGHT_OFF: result = -1; break;
-            default: result = 0;
+            case LIGHT_OFF: dimming = DIM_DOWN; break;
+            default: dimming = DIM_STOP;
         }
 
-        return result;
+        return dimming;
     }
 
     /**
@@ -194,6 +200,8 @@ private:
         wait = 0;
     }
 
+    
+
     /**
      * On Sate LIGHT_KEEP_BRIGHTNESS: Calculates the voltage step direction and adjusts the state
      * @param curBrightness measured brightness in %
@@ -202,16 +210,16 @@ private:
      */
     int16_t handleKeepBrightness(int16_t curBrightness, int16_t targetBrightness)
     {
-        int16_t result = 0;
+        int16_t dimming = 0;
         if (curBrightness + LARGE_BRIGHTNESS_DIFFERENCE < targetBrightness) {
             mState = LIGHT_INC_BRIGHTNESS;
-            result = 1;
+            dimming = DIM_UP;
         } else if (curBrightness - LARGE_BRIGHTNESS_DIFFERENCE > targetBrightness) {
             mState = LIGHT_DEC_BRIGHTNESS;
-            result = -1;
+            dimming = DIM_DOWN;
         } else if ((curBrightness + SMALL_BRIGHTNESS_DIFFERENCE > targetBrightness) ||
                    (curBrightness - SMALL_BRIGHTNESS_DIFFERENCE > targetBrightness)){
-            wait = 0;
+            wait = RESET_WAIT;
         } else {
             if (curBrightness < targetBrightness) {
                 wait = max(0, wait + 1);
@@ -220,21 +228,21 @@ private:
                 wait = min(0, wait - 1);
             }
             if (wait >= MAX_WAIT) {
-                wait = 0;
-                result = 1;
+                wait = RESET_WAIT;
+                dimming = DIM_UP;
             }
             if (wait <= -MAX_WAIT) {
-                wait = 0;
-                result = -1;
+                wait = RESET_WAIT;
+                dimming = DIM_DOWN;
             }
         }
-        return result;
+        return dimming;
     }
 
     uint8_t mState;
     int8_t wait;
-    static const int16_t LARGE_BRIGHTNESS_DIFFERENCE = 40;
-    static const int16_t SMALL_BRIGHTNESS_DIFFERENCE = 15;
+    static const int16_t LARGE_BRIGHTNESS_DIFFERENCE = 30;
+    static const int16_t SMALL_BRIGHTNESS_DIFFERENCE = 12;
     static const uint8_t MAX_WAIT = 20;
     static const uint8_t WAIT_FOR_RELIABLE_BRIGHTNESS_MEASUREMENT = 100;
 

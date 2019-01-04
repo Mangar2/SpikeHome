@@ -5,8 +5,9 @@
  * any purpose.
  *
  * File:    Activity.cpp
- * Author:  Volker Böhm
- * Copyright: Volker Böhm
+ * Author:  Volker BÃ¶hm
+ * Copyright: Volker BÃ¶hm
+ * Version:   1.0
  * ---------------------------------------------------------------------------------------------------
  */
 
@@ -51,8 +52,7 @@ void Activity::setTime(time_t activityTimeInSeconds)
     if (!mLightSwichtdOnByCommand || mActivityTimeInMilliseconds < newTimeInMilliseconds) {
         mActivityTimeInMilliseconds = newTimeInMilliseconds;
     }
-    printIfDebug(F("Activity(ms):"));
-    printlnIfDebug(mActivityTimeInMilliseconds);
+    printVariableIfDebug(mActivityTimeInMilliseconds);
 }
 
 StateValue Activity::getValue()
@@ -107,11 +107,14 @@ void Activity::handleChange(address_t senderAddress, key_t key, StateValue data)
                 setConfigValue(key, newValue);
             }
             break;
-        case FS20_COMMMAND: handleFS20Command(newValue);
+        case FS20_COMMMAND:
+            handleFS20Command(newValue);
+            mLightSwichtdOnByCommand = true;
             break;
         case SET_LIGHT_TIME:
             // Enforce sending new state to server if activity switches between on and off
             mLastValue = newValue == 0 ? 1 : 0;
+            mLightSwichtdOnByCommand = newValue != 0;
             setTime(newValue);
             break;
     }

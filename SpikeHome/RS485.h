@@ -18,7 +18,7 @@
 #define __RS485_H
 
 #include "RS485State.h"
-#include "Notification.h"
+#include "NotificationV2.h"
 #include "SerialIO.h"
 
 class Notification;
@@ -55,7 +55,7 @@ private:
      * sends a notification to the RS485 bus
      * @param notification notification to write
      */
-    virtual void sendNotification(const Notification& notification);
+    virtual void sendNotification(const NotificationV2& notification);
 
     /**
      * Checks if an error occured while receiving a package and send an
@@ -67,19 +67,19 @@ private:
      * Handles a notification received from RS485
      * Notification notification read from serial
      */
-    void handleNotification(const Notification& notification);
+    void handleNotification(const NotificationV2& notification);
 
     /**
      * Handles a notification received of type "state"
      * @param notification notification read from serial
      */
-    void handleStateNotification(const Notification& notification);
+    void handleStateNotification(const NotificationV2& notification);
 
     /**
      * Handles a notification received of type "command"
      * @param notification notification read from serial
      */
-    void handleCommandNotification(const Notification& notification);
+    void handleCommandNotification(const NotificationV2& notification);
 
     /**
      * Performs token handling if nothing has been send
@@ -97,7 +97,7 @@ private:
     RS485State mState;
     bool       mStateChanged;
     value_t    mReceiveError;
-    uint8_t    mReceiveBuf[Notification::BUFFER_SIZE];
+    uint8_t    mReceiveBuf[NotificationV2::BUFFER_SIZE];
 };
 
 #endif // __RS485_H

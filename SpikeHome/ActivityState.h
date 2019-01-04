@@ -22,6 +22,7 @@ class ActivityState {
 public:
 
     static const uint8_t ACTIVITY_OFF                   = 0;
+    static const uint8_t ACTIVITY_MANUAL_SWITCHED_ON    = 1;
     static const uint8_t ACTIVITY_ENTERED               = 2;
     static const uint8_t ACTIVITY_LEAVING               = 4;
     static const uint8_t ACTIVITY_IN_ROOM               = 10;

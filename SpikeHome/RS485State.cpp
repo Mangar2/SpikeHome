@@ -12,6 +12,7 @@
  * ---------------------------------------------------------------------------------------------------
  */
 
+//#define DEBUG
 #include "RS485State.h"
 
 RS485State::RS485State()
@@ -54,6 +55,7 @@ value_t RS485State::changeState(value_t value, bool notForMe)
         case STATE_SINGLE: res = handleSingle(value, notForMe); break;
         case STATE_UNREGISTERED: res = handleUnregistered(value, notForMe); break;
         case STATE_REGISTERED: res = handleRegistered(value, notForMe); break;
+        case STATE_STABLE: res = handleStable(value, notForMe); break;
     }
     return res;
 }
@@ -92,7 +94,7 @@ value_t RS485State::activateEnableSend()
     if (getReceiverAddress() == 0) {
         res = REGISTRATION_REQUEST;
     } else {
-        res = ENABLE_SEND;
+        res = PASS_SEND_TOKEN_TO_NEXT_DEVICE;
     }
     return res;
 }
@@ -113,7 +115,7 @@ value_t RS485State::handleUnknown(value_t value, bool notForMe)
     value_t res = 0;
     setMaySend(false);
     switch (value) {
-    case ENABLE_SEND:
+    case PASS_SEND_TOKEN_TO_NEXT_DEVICE:
         res = handleEnableSend(notForMe);
         break;
     case REGISTRATION_INFO:
@@ -143,7 +145,7 @@ value_t RS485State::handleReboot(value_t value, bool notForMe)
     key_t res = 0;
     setMaySend(false);
     switch (value) {
-    case ENABLE_SEND:
+    case PASS_SEND_TOKEN_TO_NEXT_DEVICE:
         res = handleEnableSend(notForMe);
         break;
     case REGISTRATION_INFO:
@@ -169,7 +171,7 @@ value_t RS485State::handleSingle(value_t value, bool notForMe)
     value_t res = 0;
 
     switch (value) {
-    case ENABLE_SEND:
+    case PASS_SEND_TOKEN_TO_NEXT_DEVICE:
         res = handleEnableSend(notForMe);
         break;
     case REGISTRATION_INFO:
@@ -201,10 +203,10 @@ value_t RS485State::handleUnregistered(value_t value, bool notForMe)
     value_t res = 0;
     setMaySend(false);
     switch (value) {
-    case ENABLE_SEND:
+    case PASS_SEND_TOKEN_TO_NEXT_DEVICE:
         if (!notForMe) {
             changeStateTo(STATE_REGISTERED);
-            setMaySend(true);
+            mWaitAfterRegistrationTimer = LOOPS_TO_WAIT_AFTER_REGISTRATION;
         }
         res = STATE_CHANGED;
         break;
@@ -231,7 +233,7 @@ value_t RS485State::registeredShortLoopBreak()
         if (mNeighbour == NEIGHBOUR_UNKNOWN && !mTokenLost) {
             res = REGISTRATION_REQUEST;
         } else {
-            res = ENABLE_SEND;
+            res = PASS_SEND_TOKEN_TO_NEXT_DEVICE;
         }
     }
     return res;
@@ -240,23 +242,31 @@ value_t RS485State::registeredShortLoopBreak()
 value_t RS485State::handleRegistered(value_t value, bool notForMe)
 {
     value_t res = 0;
+    printlnIfDebug("handleRegistered");
     switch (value) {
-    case ENABLE_SEND:
+    case PASS_SEND_TOKEN_TO_NEXT_DEVICE:
+        printVariableIfDebug(mWaitAfterRegistrationTimer);
         if (!notForMe) {
-            setMaySend(true);
+            if (mWaitAfterRegistrationTimer == 0) {
+                changeStateTo(STATE_STABLE);
+                printVariableIfDebug(mState);
+            } else {
+                mWaitAfterRegistrationTimer --;
+            }
             mTimer = 0;
-        } else {
-            setMaySend(false);
-            mLastEnableSend = mTimer;
         }
-    case REGISTRATION_INFO: break;
+        break;
+    case REGISTRATION_INFO:
+        mWaitAfterRegistrationTimer = LOOPS_TO_WAIT_AFTER_REGISTRATION;
+        printVariableIfDebug(mWaitAfterRegistrationTimer);
+        break;
     case REGISTRATION_REQUEST: break;
     case LOOP_SHORT_BREAK:
         res = registeredShortLoopBreak();
         break;
     case LOOP_LONG_BREAK:
         if (mTimer == TIMER_LARGE_PERIOD && mNeighbour == NEIGHBOUR_UNKNOWN && mLeftmostCeibling != NEIGHBOUR_UNKNOWN) {
-            res = ENABLE_SEND;
+            res = PASS_SEND_TOKEN_TO_NEXT_DEVICE;
         }
         break;
     case LOOP_TIMEOUT:
@@ -266,3 +276,40 @@ value_t RS485State::handleRegistered(value_t value, bool notForMe)
     }
     return res;
 }
+
+value_t RS485State::handleStable(value_t value, bool notForMe)
+{
+    value_t res = 0;
+    printlnIfDebug("handleStable");
+    switch (value) {
+    case PASS_SEND_TOKEN_TO_NEXT_DEVICE:
+        if (!notForMe) {
+            setMaySend(true);
+            mTimer = 0;
+        } else {
+            setMaySend(false);
+            mLastEnableSend = mTimer;
+        }
+        break;
+    case REGISTRATION_INFO:
+        mWaitAfterRegistrationTimer = LOOPS_TO_WAIT_AFTER_REGISTRATION;
+        setMaySend(false);
+        changeStateTo(STATE_REGISTERED);
+        break;
+    case REGISTRATION_REQUEST: break;
+    case LOOP_SHORT_BREAK:
+        res = registeredShortLoopBreak();
+        break;
+    case LOOP_LONG_BREAK:
+        if (mTimer == TIMER_LARGE_PERIOD && mNeighbour == NEIGHBOUR_UNKNOWN && mLeftmostCeibling != NEIGHBOUR_UNKNOWN) {
+            res = PASS_SEND_TOKEN_TO_NEXT_DEVICE;
+        }
+        break;
+    case LOOP_TIMEOUT:
+        changeStateTo(STATE_UNREGISTERED);
+        res = STATE_CHANGED;
+        break;
+    }
+    return res;
+}
+

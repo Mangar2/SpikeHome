@@ -154,6 +154,11 @@ void Light::handleChange(address_t senderAddress, key_t key, StateValue data)
             break;
         case DIMMING_DELAY_KEY: setDimmingDelay(value);
             break;
+        case SET_LIGHT_TIME:
+            if (value != 0) {
+                mState.setLight(true, true);
+            }
+            break;
         default:
             BrightnessSensor::handleChange(0, key, data);
             break;
@@ -184,7 +189,8 @@ bool Light::dimLight()
         voltageDiff = -1;
     }
 
-    return changeLightVoltage(voltageDiff);
+    bool isDimming = changeLightVoltage(voltageDiff);
+    return isDimming;
 }
 
 int16_t Light::calcNextVoltage(int16_t curVoltage, bool higher)
@@ -267,6 +273,7 @@ void Light::checkState(time_t scheduleLoops)
         }
     }
     if ((scheduleLoops & NotifyTarget::CHECKSTATE_SELDOM) == 0 && !isDimming) {
+        mState.checkForDarkness(isDarkEnoughToSwitchOnLight());
         State::checkState(scheduleLoops);
     }
 }

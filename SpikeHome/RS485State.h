@@ -31,14 +31,14 @@ public:
     typedef uint8_t state_t;
 
     static const char TOKEN                            = '!';
-    static const value_t ENABLE_SEND                  = 1;
-    static const value_t REGISTRATION_INFO            = 2;
-    static const value_t REGISTRATION_REQUEST         = 3;
-    static const value_t STATE_CHANGED                = 4;
-    static const value_t LOOP_TIMEOUT                 = 10;
-    static const value_t LOOP_START                   = 11;
-    static const value_t LOOP_SHORT_BREAK             = 12;
-    static const value_t LOOP_LONG_BREAK              = 13;
+    static const value_t PASS_SEND_TOKEN_TO_NEXT_DEVICE = 1;
+    static const value_t REGISTRATION_INFO              = 2;
+    static const value_t REGISTRATION_REQUEST           = 3;
+    static const value_t STATE_CHANGED                  = 4;
+    static const value_t LOOP_TIMEOUT                   = 10;
+    static const value_t LOOP_START                     = 11;
+    static const value_t LOOP_SHORT_BREAK               = 12;
+    static const value_t LOOP_LONG_BREAK                = 13;
 
     RS485State();
 
@@ -81,6 +81,15 @@ public:
     state_t getState()
     {
         return mState;
+    }
+
+    /**
+     * Decides, if commands should be ignored due to registration processes
+     * @return true, if commands should be ignored
+     */
+    bool ignoreCommands()
+    {
+        return mState != STATE_STABLE;
     }
 
 private:
@@ -163,23 +172,36 @@ private:
      */
     value_t handleRegistered(value_t value, bool notForMe);
 
+    /**
+     * Handles a STABLE state. The state is stable, if registered and with few errors detected
+     * @param value value of notification received
+     * @param notForMe true, if notification was for another device
+     * @return type of next request
+     */
+    value_t handleStable(value_t value, bool notForMe);
+
+
+
     static const state_t STATE_UNKNOWN            = 0;
     static const state_t NEIGHBOUR_UNKNOWN        = 255;
     static const state_t STATE_REBOOT             = 1;
     static const state_t STATE_SINGLE             = 2;
     static const state_t STATE_UNREGISTERED       = 3;
     static const state_t STATE_REGISTERED         = 4;
+    static const state_t STATE_STABLE             = 5;
 
     static const uint16_t MAX_WAIT_TIMER           = 1000;
-    static const uint16_t TIMER_SMALL_PERIOD       = 15; // 30
-    static const uint16_t TIMER_LARGE_PERIOD       = 30; // 70
+    static const uint16_t TIMER_SMALL_PERIOD       = 30; // 15
+    static const uint16_t TIMER_LARGE_PERIOD       = 70; // 30
     static const uint16_t TIMER_LOOP               = TIMER_SMALL_PERIOD + TIMER_LARGE_PERIOD;
     static const uint16_t TIMEOUT_NO_ENABLE_SEND   = 4 * TIMER_LOOP;
+    static const uint8_t LOOPS_TO_WAIT_AFTER_REGISTRATION = 3;
 
 
     state_t     mState;
     uint16_t    mTimer;
     uint16_t    mLastEnableSend;
+    uint8_t     mWaitAfterRegistrationTimer;
     address_t   mNeighbour;
     address_t   mLeftmostCeibling;
 

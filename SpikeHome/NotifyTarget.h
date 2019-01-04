@@ -59,7 +59,7 @@ public:
     static const key_t DEBUG_INFO_NOTIFICATION      = 'd';
 
     /**
-     * Notifies about read-errors of a device (DHT22)
+     * Notifies about errors while receiving messages
      */
     static const key_t RECEIVE_ERROR_NOTIFICATION   = 'e';
 

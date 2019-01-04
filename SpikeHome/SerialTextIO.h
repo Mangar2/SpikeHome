@@ -26,14 +26,14 @@ class SerialTextIO : public SerialIO
 public:
     SerialTextIO(device_t deviceAmount) : SerialIO(deviceAmount) { }
 
-    virtual void sendNotification(const Notification& notification)
+    virtual void sendNotification(const NotificationV2& notification)
     {
         notification.printJsonToSerial(&Serial);
     }
 
     virtual void pollNonBlocking()
     {
-        Notification notification;
+        NotificationV2 notification;
         if (notification.getJsonFromSerial(&Serial, mSerialSpeedInBitsPerSecond)) {
             if (notification.isAcknowledge()) {
                reply(notification);
