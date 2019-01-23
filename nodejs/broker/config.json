@@ -1,0 +1,26 @@
+{
+    "development": {
+        "configId": "development",
+        "dataDirectory": "./data",
+        "serviceName": "Broker",
+        "httpPort": 8183
+    },
+    "testing": {
+        "configId": "testing",
+        "dataDirectory": "./data",
+        "serviceName": "Broker",
+        "httpPort": 8183
+    },
+    "staging": {
+        "configId": "staging",
+        "dataDirectory": "./data",
+        "serviceName": "Broker",
+        "httpPort": 8183
+    },
+    "production": {
+        "configId": "production",
+        "dataDirectory": "./data",
+        "serviceName": "Broker",
+        "httpPort": 8183
+    }
+}
