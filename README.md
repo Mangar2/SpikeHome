@@ -61,15 +61,12 @@ Please use the tutorials to understand the framework starting with Tutorial1.
 The library includes communication classes that can be used to communicate with the PC. You are able to add your own class and attach them to the framework.
 Currently I deliver a communication based on the serial – usb connection using a json format and a kind of toking ring communication binary protocol based on RS485. Using the RS485 solution you may attach several Arduino on one bus of two wires.
 
+Use the yaha (Mangar2/yaha) home automation for communication
+
 ## Limits
 
 The software design is limited by the available memory of the Arduino. I would like to have more memory and provide a better design in some places.
 Currently I do not provide the PC side of the RS485 communication. I have the source code based on node.js but it is not yet usable for others. Especially because it is closely linked to specific database tables that are historically grown.
-
-## Node-Js Version 0.1
-
-I have added node.js sources to connect to the RS485 BUS. It works already well, but I am not fully happy with the archtitecture and it contains some compatibility code (like a call to store the data in an SQL server). I need to remove this from the library and put it in the main file (supporting a "persistence callback"). Still it will work and writes some error messages to stdio.
-The Data of the arduinos is only held in memory. The library does not include any persistence. Persistence is a topic that should be realized in a different library or even in a different micro-service. The data in memory can be fetched and modified by a small REST API (having very poor error handling yet).
 
 ## Next topics
 
