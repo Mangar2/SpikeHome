@@ -40,6 +40,7 @@ public:
     static const value_t LOOP_SHORT_BREAK               = 12;
     static const value_t LOOP_LONG_BREAK                = 13;
 
+
     RS485State();
 
     uint8_t getReceiverAddress();

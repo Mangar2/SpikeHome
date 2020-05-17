@@ -63,6 +63,15 @@ public:
      */
     void broadcast(device_t deviceNo, key_t key, value_t value);
 
+      /**
+     * Broadcasts a notification
+     * @param deviceNo device number sending the command
+     * @param key key of the notification
+     * @param value value of the notification
+     * @param version of the message to broadcast
+     */
+    void broadcast(device_t deviceNo, key_t key, value_t value, uint8_t messageVersion);
+
     /**
      * Sends a notificaton to a special device
      * @param deviceNo device number sending the command
@@ -124,6 +133,7 @@ protected:
     time_t    mSerialSpeedInBitsPerSecond;
     HardwareSerial* mpSerial;
     address_t mSenderAddress[MAX_DEVICE_AMOUNT];
+    uint8_t   mMessageVersion;
 
 };
 

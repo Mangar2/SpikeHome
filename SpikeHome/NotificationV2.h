@@ -30,6 +30,8 @@ public:
     typedef uint8_t error_t;
     typedef uint16_t check_t;
 
+    static const uint8_t MAX_SUPPORTED_MESSAGE_VERSION  = 1;
+
     static const error_t NO_ERROR = 0;
     static const error_t NO_DATA  = 1;
     static const error_t INVALID_LENGTH_ERROR = 2;
@@ -74,6 +76,26 @@ public:
      * @param bytesReceived amount of bytes in the receive buffer
      */
     NotificationV2(buffer_t buffer, base_t bytesReceived);
+
+    /**
+     * Sets the message version
+     * @param version new message version (currently supported: 0, 1)
+     */
+    void setVersion(base_t version) 
+    {
+        if (version <= MAX_SUPPORTED_MESSAGE_VERSION) {
+            mVersion = version;
+        }
+    }
+
+    /**
+     * Gets the current message version
+     * @returns message version
+     */
+    base_t getVersion() const
+    {
+        return mVersion;
+    }
 
     /**
      * Checks if the notification is empty or unset
@@ -210,6 +232,18 @@ private:
      * @param bytesReceived amount of bytes in the receive buffer
      */ 
     void setVersion1(buffer_t buffer, base_t bytesReceived);
+
+    /**
+     * Writes part of the data of a Version 1 message (helper for writeToSerial)
+     * @param serial serial device
+     */
+    void writeV1ToSerial(HardwareSerial* serial) const;
+
+    /**
+     * Writes part of the data of a Version 0 message (helper for writeToSerial)
+     * @param serial serial device
+     */
+    void writeV0ToSerial(HardwareSerial* serial) const;
 
     /**
      * Calculates a parity value

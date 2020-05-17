@@ -23,12 +23,18 @@ RS485::RS485(device_t deviceAmount, pin_t readWritePin)
     // Receive mode is standard.
     pinMode(mReadWritePin, OUTPUT);
     digitalWrite(mReadWritePin, RS485_RECEIVE);  // Enable Receive
+
+    mMessageVersion = NotificationV2::MAX_SUPPORTED_MESSAGE_VERSION;
+
 }
 
 void RS485::sendNotification(const NotificationV2& notification)
 {
     int32_t bitsPerNotification = BITS_PER_CHAR * int32_t(NotificationV2::BUFFER_SIZE);
-
+#ifdef DEBUG
+    uint8_t version = notification.getVersion();
+    printVariableIfDebug(version);
+#endif
     digitalWrite(mReadWritePin, RS485_TRANSMIT);
     // Short delay to ensure write state is set on RS485
     delay(3);
@@ -59,8 +65,10 @@ void RS485::pollNonBlocking()
             }
         }
     } while ((timeLastCharRead + timeoutInMilliseconds > millis()) && (i < NotificationV2::BUFFER_SIZE));
+
 #ifdef DEBUG
     if (i > 0) {
+
         for (int j = 0; j < i; j++) {
             Trace::printHex(mReceiveBuf[j]);
         }
@@ -80,12 +88,16 @@ void RS485::handleStateNotification(const NotificationV2& notification)
     bool notForMe = notification.getReceiverAddress() != mSenderAddress[0];
     mState.storeSenderAddress( notification.getSenderAddress(), mSenderAddress[0]);
     sendReceiveError();
-    handleNewTokenState(mState.changeState(value, notForMe));
+    if (value == RS485State::PASS_SEND_TOKEN_TO_NEXT_DEVICE) {
+        mMessageVersion = notification.getVersion();    
+    }
+    value_t newState = mState.changeState(value, notForMe);
+    handleNewTokenState(newState, notification.getVersion());
 }
 
 void RS485::handleCommandNotification(const NotificationV2& notification)
 {
-#ifdef _DEBUG
+#ifdef DEBUG
     uint8_t state = mState.getState();
 #endif    
     sendReceiveError();
@@ -98,7 +110,7 @@ void RS485::handleCommandNotification(const NotificationV2& notification)
     }
 }
 
-void RS485::handleNewTokenState(value_t stateType)
+void RS485::handleNewTokenState(value_t stateType, uint8_t messageVersion)
 {
     if (stateType != 0) {
 
@@ -106,19 +118,15 @@ void RS485::handleNewTokenState(value_t stateType)
             mStateChanged = true;
         }
 
-        if (stateType == RS485State::REGISTRATION_INFO || (mStateChanged && maySend())) {
+        if (stateType == RS485State::REGISTRATION_INFO || (mStateChanged && maySend() )) {
             sendToServer(0, NotifyTarget::STATE_NOTIFICATION, value_t(mState.getState()) * 0x100 + mState.getReceiverAddress());
             sendToServer(0, NotifyTarget::MEM_LEFT_NOTIFICATION, Trace::getFreeMemory());
             mStateChanged = false;
         }
         if (stateType == RS485State::PASS_SEND_TOKEN_TO_NEXT_DEVICE) {
-            sendNotification(NotificationV2(
-                RS485State::TOKEN,
-                RS485State::PASS_SEND_TOKEN_TO_NEXT_DEVICE,
-                mSenderAddress[0],
-                mState.getReceiverAddress()));
+            sendToAddress(0, RS485State::TOKEN, RS485State::PASS_SEND_TOKEN_TO_NEXT_DEVICE, mState.getReceiverAddress());
         } else if (stateType != RS485State::STATE_CHANGED) {
-            broadcast(0, RS485State::TOKEN, stateType);
+            broadcast(0, RS485State::TOKEN, stateType, messageVersion);
         }
     }
 }
@@ -136,7 +144,7 @@ void RS485::handleNotification(const NotificationV2& notification)
             mReceiveError = 0x0200 + notification.getKey();
             break;
         case NotificationV2::NO_DATA:
-            handleNewTokenState(mState.changeStateNoInfo());
+            handleNewTokenState(mState.changeStateNoInfo(), mMessageVersion);
             break;
         case NotificationV2::NO_ERROR:
 #ifdef DEBUG

@@ -12,6 +12,9 @@
  * Created on 24. Dezember 2016, 07:04
  * ---------------------------------------------------------------------------------------------------
  */
+
+//#define DEBUG
+
 #include "NotificationV2.h"
 #include "SerialReader.h"
 #include "CRC16.h"
@@ -47,16 +50,25 @@ NotificationV2::NotificationV2(key_t key, StateValue value, base_t senderAddress
 
 NotificationV2::NotificationV2(buffer_t buffer, base_t bytesReceived)
 {
-    mSenderAddress = buffer[0];
-    mReceiverAddress = buffer[1];
-    mAcknowledge = buffer[2] & 1;
-    mVersion = buffer[2] >> VERSION_SHIFT;
+    mKey = 0;
+    mSize = 0;
+    if (bytesReceived == 0) {
+        mError = NO_DATA;
+    } else if (bytesReceived < 2) {
+        mError = INVALID_LENGTH_ERROR;
+    } else {
+        mSenderAddress = buffer[0];
+        mReceiverAddress = buffer[1];
+        mAcknowledge = buffer[2] & 1;
+        mVersion = buffer[2] >> VERSION_SHIFT;
 
-    switch (mVersion) {
-        case 0: setVersion0(buffer, bytesReceived); break;
-        case 1: setVersion1(buffer, bytesReceived); break;
-        default:
-            mError = ILLEGAL_VERSION;
+        switch (mVersion) {
+            case 0: setVersion0(buffer, bytesReceived); break;
+            case 1: setVersion1(buffer, bytesReceived); break;
+            default:
+                mError = ILLEGAL_VERSION;
+        }
+        printVariableIfDebug(mError);
     }
 }
 
@@ -69,9 +81,7 @@ void NotificationV2::setVersion0(buffer_t buffer, base_t bytesReceived)
     mBytesReceived = bytesReceived;
     mError = NO_ERROR;
 
-    if (bytesReceived == 0) {
-        mError = NO_DATA;
-    } else if (bytesReceived != BUFFER_SIZE_V0) {
+    if (bytesReceived != BUFFER_SIZE_V0) {
         mError = INVALID_LENGTH_ERROR;
         mKey = 0;
     } else if (calcParity() != parity) {
@@ -89,9 +99,7 @@ void NotificationV2::setVersion1(buffer_t buffer, base_t bytesReceived)
     mBytesReceived = bytesReceived;
     mError = NO_ERROR;
 
-    if (bytesReceived == 0) {
-        mError = NO_DATA;
-    } else if (bytesReceived != BUFFER_SIZE) {
+    if (bytesReceived != BUFFER_SIZE) {
         mError = INVALID_LENGTH_ERROR;
         mKey = 0;
     } else if (calcCRC16() != crc16) {
@@ -100,18 +108,37 @@ void NotificationV2::setVersion1(buffer_t buffer, base_t bytesReceived)
     }
 }
 
-
-void NotificationV2::writeToSerial(HardwareSerial* serial) const
+void NotificationV2::writeV0ToSerial(HardwareSerial* serial) const
 {
-    serial->write(mSenderAddress);
-    serial->write(mReceiverAddress);
-    serial->write(mAcknowledge + (mVersion << VERSION_SHIFT));
+    serial->write(mKey);
+    serial->write(mValue.getIntPlaces());
+    serial->write(mValue.getDecPlaces());
+    base_t parity = calcParity();
+    serial->write(parity);
+}
+
+void NotificationV2::writeV1ToSerial(HardwareSerial* serial) const
+{
     serial->write(mSize);
     serial->write(mKey);
     serial->write(mValue.getIntPlaces());
     serial->write(mValue.getDecPlaces());
     check_t crc16 = calcCRC16();
     serial->write((uint8_t*) &crc16, sizeof(crc16));
+}
+
+void NotificationV2::writeToSerial(HardwareSerial* serial) const
+{
+    serial->write(mSenderAddress);
+    serial->write(mReceiverAddress);
+    serial->write(mAcknowledge + (mVersion << VERSION_SHIFT));
+
+    switch (mVersion) {
+        case 0: writeV0ToSerial(serial); break;
+        case 1: writeV1ToSerial(serial); break;
+        default:
+            ; // ILLEGAL_VERSION
+    }
 }
 
 void NotificationV2::printToSerial(HardwareSerial* serial) const

@@ -84,8 +84,9 @@ private:
     /**
      * Performs token handling if nothing has been send
      * @param stateType type of state change. See constant defintions in RS485State.h
+     * @param version of the incoming message
      */
-    void handleNewTokenState(value_t stateType);
+    void handleNewTokenState(value_t stateType, uint8_t messageVersion);
 
 
     static const int8_t    RS485_TRANSMIT            = HIGH;
@@ -93,8 +94,10 @@ private:
     static const time_t    BITS_PER_CHAR             = 9L;
     static const time_t    MILLISECONDS_IN_A_SECOND  = 1000L;
 
+
     pin_t      mReadWritePin;
     RS485State mState;
+
     bool       mStateChanged;
     value_t    mReceiveError;
     uint8_t    mReceiveBuf[NotificationV2::BUFFER_SIZE];

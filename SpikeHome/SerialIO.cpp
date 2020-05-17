@@ -24,6 +24,7 @@ SerialIO::SerialIO(device_t deviceAmount)
     for (device_t deviceNo = 0; deviceNo < deviceAmount; deviceNo++) {
         mSenderAddress[deviceNo] = Device::addConfigValue(deviceNo, NotifyTarget::ADDRESS_KEY, ADDRESS_NOT_SET);
     }
+    
 }
 
 void SerialIO::initSerial(HardwareSerial* pSerial, time_t serialSpeed)
@@ -37,18 +38,28 @@ void SerialIO::initSerial(HardwareSerial* pSerial, time_t serialSpeed)
 void SerialIO::sendToServer(device_t deviceNo, key_t key, value_t value)
 {
     NotificationV2 notification(key, value, mSenderAddress[deviceNo], mReceiverAddress);
+    notification.setVersion(mMessageVersion);
     sendNotification(notification);
 }
 
 void SerialIO::broadcast(device_t deviceNo, key_t key, value_t value)
 {
     NotificationV2 notification(key, value, mSenderAddress[deviceNo], BROADCAST_ADDRESS);
+    notification.setVersion(mMessageVersion);
+    sendNotification(notification);
+}
+
+void SerialIO::broadcast(device_t deviceNo, key_t key, value_t value, uint8_t messageVersion)
+{
+    NotificationV2 notification(key, value, mSenderAddress[deviceNo], BROADCAST_ADDRESS);
+    notification.setVersion(messageVersion);
     sendNotification(notification);
 }
 
 void SerialIO::sendToAddress(device_t deviceNo, key_t key, value_t value, address_t receiverAddress)
 {
     NotificationV2 notification(key, value, mSenderAddress[deviceNo], receiverAddress);
+    notification.setVersion(mMessageVersion);
     sendNotification(notification);
 }
 
@@ -56,6 +67,7 @@ void SerialIO::reply(const NotificationV2& notification)
 {
     NotificationV2 reply(notification.getKey(), notification.getValueInt(),
             notification.getReceiverAddress(), notification.getSenderAddress());
+    reply.setVersion(notification.getVersion());
     sendNotification(reply);
 }
 
