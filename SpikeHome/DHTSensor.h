@@ -41,20 +41,6 @@ public:
      */
     float getTemperature();
 
-
-private:
-
-    typedef int8_t dht_t;
-    static const time_t WAIT_FOR_WAKEUP_IN_MILLISECONDS = 1;
-    static const time_t WAIT_FOR_INPUT_IN_MICROSECONDS = 30;
-    static const time_t WAIT_FOR_ACKNOWLEDGE_LOOPS = 9;
-    static const time_t WAIT_FOR_DATA_LOOPS = 9;
-
-    /**
-     * Requests data from sensor
-     */
-    void requestData();
-
     /**
      * Reads data from a DHT22 sensor
      * @param humidity output: humidity read
@@ -63,6 +49,18 @@ private:
      */
     bool getValue(float& humidity, float& temperature);
 
+private:
+
+    typedef int8_t dht_t;
+    static const time_t WAIT_FOR_WAKEUP_IN_MILLISECONDS = 2;
+    static const time_t WAIT_FOR_INPUT_IN_MICROSECONDS = 30;
+    static const time_t WAIT_FOR_ACKNOWLEDGE_LOOPS = 20;
+    static const time_t WAIT_FOR_DATA_LOOPS = 9;
+
+    /**
+     * Requests data from sensor
+     */
+    void requestData();
 
     /**
      * Reads data from sensor into a read buffer
@@ -88,6 +86,8 @@ private:
      * @return amount of loops until signal found, or -1 for timeout
      */
     int16_t waitForSignal(int16_t signal, int16_t loops);
+
+
 
     pin_t mPin;
     bool  mLastReadOK;

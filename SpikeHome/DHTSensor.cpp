@@ -12,6 +12,14 @@
 
 #include "DHTSensor.h"
 
+#ifdef __DEBUG
+#define IF_DEBUG(x) x
+char buf[1024];
+int bufIndex;
+#else
+#define IF_DEBUG(x)
+#endif
+
 DHTSensor::DHTSensor(device_t deviceNo, pin_t pin)
     :NotifyTarget(deviceNo), mPin(pin)
 {
@@ -46,6 +54,9 @@ bool DHTSensor::getValue(float& humidity, float& temperature)
 void DHTSensor::requestData()
 {
     pinMode(mPin, OUTPUT);
+    digitalWrite(mPin, HIGH);
+    delay(20);
+
     digitalWrite(mPin, LOW);
     delay(WAIT_FOR_WAKEUP_IN_MILLISECONDS);
 
@@ -59,7 +70,9 @@ int16_t DHTSensor::waitForSignal(int16_t signal, int16_t loops)
     int16_t index;
 
     for (index = 0; index < loops; index++) {
-        if (digitalRead(mPin) == signal) {
+        uint8_t pinValue = digitalRead(mPin);
+        IF_DEBUG(if (bufIndex < 1023) { buf[bufIndex] = pinValue == HIGH ? '1' : '.'; bufIndex++; })
+        if (pinValue == signal) {
             break;
         }
         delayMicroseconds(9);
@@ -69,6 +82,7 @@ int16_t DHTSensor::waitForSignal(int16_t signal, int16_t loops)
 
 bool DHTSensor::readData(uint8_t readBuffer[5])
 {
+
     // INIT BUFFERVAR TO RECEIVE DATA
     bool timeout = false;
     int16_t loopCount;
@@ -79,8 +93,14 @@ bool DHTSensor::readData(uint8_t readBuffer[5])
     }
 
     requestData();
-    timeout = waitForSignal(HIGH, WAIT_FOR_ACKNOWLEDGE_LOOPS) == -1;
-    timeout = timeout || !waitForSignal(LOW, WAIT_FOR_ACKNOWLEDGE_LOOPS) == -1;
+    IF_DEBUG(bufIndex = 0;)
+    
+    // Turn off interrupts temporarily due to time critical section.
+    cli();
+
+    delayMicroseconds(10);
+    timeout |= waitForSignal(HIGH, WAIT_FOR_ACKNOWLEDGE_LOOPS) == -1;
+    timeout |= waitForSignal(LOW, WAIT_FOR_ACKNOWLEDGE_LOOPS) == -1;
 
     for (uint8_t i = 0; (i < 40) && !timeout; i++)
     {
@@ -94,6 +114,10 @@ bool DHTSensor::readData(uint8_t readBuffer[5])
 
     pinMode(mPin, OUTPUT);
     digitalWrite(mPin, HIGH);
+
+    sei();
+
+    IF_DEBUG(buf[bufIndex] = 0; Serial.println(buf);)
 
     return !timeout;
 }
@@ -122,7 +146,7 @@ bool DHTSensor::notifyServer(uint16_t loopCount)
     bool readOK = getValue(humidity, temperature);
 
     if (!readOK || !mLastReadOK) {
-        sendToServer(READ_ERROR_NOTIFICATION, readOK ? 0 : 1);
+        sendToServer(READ_ERROR_NOTIFICATION, readOK ? uint16_t(0) : uint16_t(1));
     }
 
     if (readOK) {
