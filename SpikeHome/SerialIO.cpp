@@ -65,13 +65,14 @@ void SerialIO::sendToAddress(device_t deviceNo, key_t key, value_t value, addres
 
 void SerialIO::reply(const NotificationV2& notification)
 {
+    address_t receiverAddress = notification.getReceiverAddress();
     device_t deviceNo = getDeviceNoFromAddress(receiverAddress);
     const bool IsForMe = deviceNo != -1 && deviceNo < MAX_DEVICE_AMOUNT;
     const bool isBroadcast = notification.getReceiverAddress() == BROADCAST_ADDRESS;
 
     if (IsForMe && !isBroadcast) {
         NotificationV2 reply(notification.getKey(), notification.getValueInt(),
-                notification.getReceiverAddress(), notification.getSenderAddress());
+                receiverAddress, notification.getSenderAddress());
         reply.setVersion(notification.getVersion());
         sendNotification(reply);
     }
