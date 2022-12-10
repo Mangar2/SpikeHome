@@ -65,10 +65,16 @@ void SerialIO::sendToAddress(device_t deviceNo, key_t key, value_t value, addres
 
 void SerialIO::reply(const NotificationV2& notification)
 {
-    NotificationV2 reply(notification.getKey(), notification.getValueInt(),
-            notification.getReceiverAddress(), notification.getSenderAddress());
-    reply.setVersion(notification.getVersion());
-    sendNotification(reply);
+    device_t deviceNo = getDeviceNoFromAddress(receiverAddress);
+    const bool IsForMe = deviceNo != -1 && deviceNo < MAX_DEVICE_AMOUNT;
+    const bool isBroadcast = notification.getReceiverAddress() == BROADCAST_ADDRESS;
+
+    if (IsForMe && !isBroadcast) {
+        NotificationV2 reply(notification.getKey(), notification.getValueInt(),
+                notification.getReceiverAddress(), notification.getSenderAddress());
+        reply.setVersion(notification.getVersion());
+        sendNotification(reply);
+    }
 }
 
 void SerialIO::notify(const NotificationV2& notification)
@@ -79,7 +85,9 @@ void SerialIO::notify(const NotificationV2& notification)
     address_t senderAddress = notification.getSenderAddress();
     device_t deviceNo = getDeviceNoFromAddress(receiverAddress);
 
-    if (deviceNo != -1 && deviceNo < MAX_DEVICE_AMOUNT) {
+    const bool IsForMe = deviceNo != -1 && deviceNo < MAX_DEVICE_AMOUNT;
+
+    if (IsForMe) {
 
         if (key == NotifyTarget::SERVER_ADDRESS_KEY && senderAddress == SerialIO::SERVER_ADDRESS) {
             if (value != BROADCAST_ADDRESS && value < ADDRESS_NOT_SET) {
