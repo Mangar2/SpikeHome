@@ -21,7 +21,7 @@ value_t NotifyTarget::getConfigValue(key_t key)
 
 void NotifyTarget::setConfigValue(key_t key, value_t value)
 {
-    return Device::setConfigValue(getDeviceNo(), key, value);
+    Device::setConfigValue(getDeviceNo(), key, value);
 }
 
 value_t NotifyTarget::addConfigValue(key_t key, value_t value)
