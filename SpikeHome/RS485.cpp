@@ -30,8 +30,7 @@ RS485::RS485(device_t deviceAmount, pin_t readWritePin)
 
 void RS485::sendNotification(const NotificationV2& notification)
 {
-    // Required due to very weired problem on Arduino nano somehow setting it back to INPUT
-    pinMode(mReadWritePin, OUTPUT);
+
 
     int32_t bitsPerNotification = BITS_PER_CHAR * int32_t(NotificationV2::BUFFER_SIZE);
 #ifdef DEBUG
